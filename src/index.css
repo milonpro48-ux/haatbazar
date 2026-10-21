@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans Bengali", "Segoe UI", sans-serif;
+  color-scheme: light;
+  --background: 0 0% 100%;
+  --foreground: 160 20% 12%;
+  --card: 0 0% 100%;
+  --muted: 150 15% 95%;
+  --muted-foreground: 160 8% 42%;
+}
+.dark { color-scheme: dark; --background: 160 20% 7%; --foreground: 0 0% 96%; --card: 160 16% 11%; --muted: 160 12% 16%; --muted-foreground: 160 8% 68%; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }

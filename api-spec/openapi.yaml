@@ -1,0 +1,964 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: HaatBazar marketplace and authentication API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: Listings
+    description: Public marketplace listings
+  - name: Auth
+    description: Browser and mobile authentication endpoints
+  - name: Orders
+    description: Buyer orders
+  - name: Storage
+    description: Object storage upload and serving endpoints
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /listings:
+    get:
+      operationId: getListings
+      tags: [Listings]
+      summary: Browse marketplace listings
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 120
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 40
+        - name: district
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 80
+        - name: subcategory
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+        - name: saleType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [retail, wholesale, both]
+        - name: upazila
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 80
+        - name: minPrice
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+        - name: maxPrice
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [newest, price_asc, price_desc]
+            default: newest
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        "200":
+          description: One page of active listings matching the selected filters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingPage"
+    post:
+      operationId: createListing
+      tags: [Listings]
+      summary: Publish a marketplace listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListingInput"
+      responses:
+        "201":
+          description: Listing created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+        "400":
+          description: Listing details are invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Sign in is required to publish a listing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /listings/summary:
+    get:
+      operationId: getListingsSummary
+      tags: [Listings]
+      summary: Get marketplace listing totals
+      responses:
+        "200":
+          description: Listing counts for the marketplace
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingSummary"
+  /listings/mine:
+    get:
+      operationId: getMyListings
+      tags: [Listings]
+      summary: Listings created by the signed-in user (any status)
+      responses:
+        "200":
+          description: The user's own listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Listing"
+        "401":
+          description: Sign in is required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /listings/{listingId}/phone:
+    get:
+      operationId: getListingPhone
+      tags: [Listings]
+      summary: Reveal the seller phone number (rate limited)
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Seller phone number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingPhone"
+        "404":
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          description: Too many phone reveal requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /listings/{listingId}:
+    get:
+      operationId: getListing
+      tags: [Listings]
+      summary: Get one marketplace listing
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Requested listing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+        "404":
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    patch:
+      operationId: updateListing
+      tags: [Listings]
+      summary: Edit a listing or mark it sold (owner only)
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListingUpdate"
+      responses:
+        "200":
+          description: Listing updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Listing"
+        "400":
+          description: Listing details are invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Sign in is required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Only the owner can edit this listing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteListing
+      tags: [Listings]
+      summary: Delete a listing (owner only)
+      parameters:
+        - name: listingId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Listing deleted
+        "401":
+          description: Sign in is required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Only the owner can delete this listing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /auth/user:
+    get:
+      tags: [Auth]
+      operationId: getCurrentAuthUser
+      summary: Get the currently authenticated user
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationSessionHeader"
+        - $ref: "#/components/parameters/SessionCookie"
+      responses:
+        "200":
+          description: Auth status resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserEnvelope"
+  /login:
+    get:
+      tags: [Auth]
+      operationId: beginBrowserLogin
+      summary: Start browser sign-in
+      parameters:
+        - name: returnTo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to the identity provider
+  /callback:
+    get:
+      tags: [Auth]
+      operationId: handleBrowserLoginCallback
+      summary: Complete browser sign-in
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: iss
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uri
+      responses:
+        "302":
+          description: Redirect to the requested page
+  /logout:
+    get:
+      tags: [Auth]
+      operationId: logoutBrowserSession
+      summary: Clear the current browser session
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationSessionHeader"
+        - $ref: "#/components/parameters/SessionCookie"
+        - name: returnTo
+          in: query
+          required: false
+          schema:
+            type: string
+            default: /
+      responses:
+        "302":
+          description: Redirect after logout
+  /mobile-auth/token-exchange:
+    post:
+      tags: [Auth]
+      operationId: exchangeMobileAuthorizationCode
+      summary: Exchange a mobile OIDC code for a session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MobileTokenExchangeRequest"
+      responses:
+        "200":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MobileTokenExchangeSuccess"
+        "400":
+          description: Invalid exchange request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Token claims are invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Token exchange failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /mobile-auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logoutMobileSession
+      summary: Delete a mobile session token
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationSessionHeader"
+      responses:
+        "200":
+          description: Logout processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutSuccess"
+  /storage/uploads/request-url:
+    post:
+      tags: [Storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for an image upload
+      description: The client uploads image bytes directly to object storage.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+        "400":
+          description: Invalid file metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Sign in is required to upload an image
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "500":
+          description: Failed to generate upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /storage/public-objects/{filePath}:
+    get:
+      tags: [Storage]
+      operationId: getPublicObject
+      summary: Serve a public stored asset
+      parameters:
+        - name: filePath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Object content
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /storage/objects/{objectPath}:
+    get:
+      tags: [Storage]
+      operationId: getStorageObject
+      summary: Serve an uploaded marketplace image
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Image content
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Object not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /orders:
+    post:
+      operationId: createOrder
+      tags: [Orders]
+      summary: Place an order for a listing (sign-in required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Order details are invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          description: Sign in is required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Listing not found or already sold
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+  /orders/mine:
+    get:
+      operationId: getMyOrders
+      tags: [Orders]
+      summary: Orders placed by the signed-in user
+      responses:
+        "200":
+          description: The user's orders, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+        "401":
+          description: Sign in is required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+components:
+  parameters:
+    AuthorizationSessionHeader:
+      name: Authorization
+      in: header
+      required: false
+      schema:
+        type: string
+    SessionCookie:
+      name: sid
+      in: cookie
+      required: false
+      schema:
+        type: string
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+    Listing:
+      type: object
+      required: [id, title, category, district, price, unit, quantity, negotiable, status, sellerName, description, images, createdAt, sellerId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        category:
+          type: string
+          enum: [electronics, fashion, home-kitchen, grocery, agriculture, livestock-poultry-fish, machinery, vehicles, construction, beauty, books-office, services-rentals]
+        subcategory:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Must be a valid subcategory belonging to the selected category; enforce on server.
+        saleType:
+          type: string
+          enum: [retail, wholesale, both]
+          default: both
+        minOrderQuantity:
+          type: integer
+          minimum: 1
+          default: 1
+        businessName:
+          type: string
+          maxLength: 120
+        deliveryAvailable:
+          type: boolean
+          default: false
+        district:
+          type: string
+        upazila:
+          type: [string, "null"]
+        price:
+          type: integer
+          minimum: 0
+          description: Price in BDT per unit
+        unit:
+          $ref: "#/components/schemas/PriceUnit"
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity available, in the given unit
+        negotiable:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/ListingStatus"
+        sellerName:
+          type: string
+        description:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        sellerId:
+          type: string
+    ListingInput:
+      type: object
+      required: [title, category, subcategory, saleType, minOrderQuantity, district, price, unit, quantity, phone, sellerName, description, images]
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 120
+        category:
+          type: string
+          enum: [electronics, fashion, home-kitchen, grocery, agriculture, livestock-poultry-fish, machinery, vehicles, construction, beauty, books-office, services-rentals]
+          minLength: 1
+          maxLength: 40
+        subcategory:
+          type: string
+          minLength: 1
+          maxLength: 100
+        saleType:
+          type: string
+          enum: [retail, wholesale, both]
+          default: both
+        minOrderQuantity:
+          type: integer
+          minimum: 1
+          default: 1
+        businessName:
+          type: string
+          maxLength: 120
+        deliveryAvailable:
+          type: boolean
+          default: false
+        district:
+          type: string
+          enum: [ঢাকা, ফরিদপুর, গাজীপুর, গোপালগঞ্জ, কিশোরগঞ্জ, মাদারীপুর, মানিকগঞ্জ, মুন্সিগঞ্জ, নারায়ণগঞ্জ, নরসিংদী, রাজবাড়ী, শরীয়তপুর, টাঙ্গাইল, ব্রাহ্মণবাড়িয়া, চাঁদপুর, চট্টগ্রাম, কুমিল্লা, কক্সবাজার, ফেনী, খাগড়াছড়ি, লক্ষ্মীপুর, নোয়াখালী, রাঙামাটি, বান্দরবান, বগুড়া, জয়পুরহাট, নওগাঁ, নাটোর, চাঁপাইনবাবগঞ্জ, পাবনা, রাজশাহী, সিরাজগঞ্জ, হবিগঞ্জ, মৌলভীবাজার, সুনামগঞ্জ, সিলেট, দিনাজপুর, গাইবান্ধা, কুড়িগ্রাম, লালমনিরহাট, নীলফামারী, পঞ্চগড়, রংপুর, ঠাকুরগাঁও, জামালপুর, ময়মনসিংহ, নেত্রকোনা, শেরপুর, বাগেরহাট, চুয়াডাঙ্গা, যশোর, ঝিনাইদহ, খুলনা, কুষ্টিয়া, মাগুরা, মেহেরপুর, নড়াইল, সাতক্ষীরা, বরগুনা, বরিশাল, ভোলা, ঝালকাঠি, পটুয়াখালী, পিরোজপুর]
+          minLength: 1
+          maxLength: 80
+        upazila:
+          type: string
+          maxLength: 80
+        price:
+          type: integer
+          minimum: 0
+        unit:
+          $ref: "#/components/schemas/PriceUnit"
+        quantity:
+          type: integer
+          minimum: 1
+        negotiable:
+          type: boolean
+          default: false
+        phone:
+          type: string
+          minLength: 11
+          maxLength: 15
+          pattern: '^(?:\+?88)?01[3-9][0-9]{8}$'
+        sellerName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        description:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        images:
+          type: array
+          maxItems: 5
+          items:
+            type: string
+            maxLength: 500
+    PriceUnit:
+      type: string
+      enum: [kg, maund, ton, piece, dozen, liter, bag, hali, box, set, hour, day, month]
+    ListingStatus:
+      type: string
+      enum: [active, sold]
+    ListingPage:
+      type: object
+      required: [items, total, page, limit]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Listing"
+        total:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+    ListingPhone:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          type: string
+    ListingUpdate:
+      type: object
+      description: Any subset of editable fields. Setting status to sold hides the listing from browse results.
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 120
+        category:
+          type: string
+          enum: [electronics, fashion, home-kitchen, grocery, agriculture, livestock-poultry-fish, machinery, vehicles, construction, beauty, books-office, services-rentals]
+        subcategory:
+          type: string
+          minLength: 1
+          maxLength: 100
+        saleType:
+          type: string
+          enum: [retail, wholesale, both]
+        minOrderQuantity:
+          type: integer
+          minimum: 1
+        businessName:
+          type: string
+          maxLength: 120
+        deliveryAvailable:
+          type: boolean
+        district:
+          type: string
+          enum: [ঢাকা, ফরিদপুর, গাজীপুর, গোপালগঞ্জ, কিশোরগঞ্জ, মাদারীপুর, মানিকগঞ্জ, মুন্সিগঞ্জ, নারায়ণগঞ্জ, নরসিংদী, রাজবাড়ী, শরীয়তপুর, টাঙ্গাইল, ব্রাহ্মণবাড়িয়া, চাঁদপুর, চট্টগ্রাম, কুমিল্লা, কক্সবাজার, ফেনী, খাগড়াছড়ি, লক্ষ্মীপুর, নোয়াখালী, রাঙামাটি, বান্দরবান, বগুড়া, জয়পুরহাট, নওগাঁ, নাটোর, চাঁপাইনবাবগঞ্জ, পাবনা, রাজশাহী, সিরাজগঞ্জ, হবিগঞ্জ, মৌলভীবাজার, সুনামগঞ্জ, সিলেট, দিনাজপুর, গাইবান্ধা, কুড়িগ্রাম, লালমনিরহাট, নীলফামারী, পঞ্চগড়, রংপুর, ঠাকুরগাঁও, জামালপুর, ময়মনসিংহ, নেত্রকোনা, শেরপুর, বাগেরহাট, চুয়াডাঙ্গা, যশোর, ঝিনাইদহ, খুলনা, কুষ্টিয়া, মাগুরা, মেহেরপুর, নড়াইল, সাতক্ষীরা, বরগুনা, বরিশাল, ভোলা, ঝালকাঠি, পটুয়াখালী, পিরোজপুর]
+          minLength: 1
+          maxLength: 80
+        upazila:
+          type: string
+          maxLength: 80
+        price:
+          type: integer
+          minimum: 0
+        unit:
+          $ref: "#/components/schemas/PriceUnit"
+        quantity:
+          type: integer
+          minimum: 1
+        negotiable:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/ListingStatus"
+        description:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        images:
+          type: array
+          maxItems: 5
+          items:
+            type: string
+            maxLength: 500
+    ListingSummary:
+      type: object
+      required: [totalListings, recentListings]
+      properties:
+        totalListings:
+          type: integer
+          minimum: 0
+        recentListings:
+          type: integer
+          minimum: 0
+    AuthUser:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl]
+      properties:
+        id:
+          type: string
+        email:
+          type: [string, "null"]
+          format: email
+        firstName:
+          type: [string, "null"]
+        lastName:
+          type: [string, "null"]
+        profileImageUrl:
+          type: [string, "null"]
+    AuthUserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/AuthUser"
+            - type: "null"
+    MobileTokenExchangeRequest:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        code_verifier:
+          type: string
+          minLength: 1
+        redirect_uri:
+          type: string
+          minLength: 1
+          format: uri
+        state:
+          type: string
+          minLength: 1
+        nonce:
+          type: string
+          minLength: 1
+    MobileTokenExchangeSuccess:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+    LogoutSuccess:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+          const: true
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+          maximum: 5242880
+          description: File size in bytes, 5 MB maximum
+        contentType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp]
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+          format: uri
+        objectPath:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/UploadUrlRequest"
+    OrderInput:
+      type: object
+      required: [listingId, quantity, buyerName, buyerPhone, address]
+      properties:
+        listingId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        buyerName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        buyerPhone:
+          type: string
+          pattern: '^(?:\+?88)?01[3-9][0-9]{8}$'
+        address:
+          type: string
+          minLength: 5
+          maxLength: 500
+    Order:
+      type: object
+      required: [id, listingId, listingTitle, quantity, total, buyerName, buyerPhone, address, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        listingId:
+          type: string
+          format: uuid
+        listingTitle:
+          type: string
+        quantity:
+          type: integer
+        total:
+          type: integer
+          description: Total price in BDT, computed by the server
+        buyerName:
+          type: string
+        buyerPhone:
+          type: string
+        address:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, delivered, cancelled]
+        createdAt:
+          type: string
+          format: date-time
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
