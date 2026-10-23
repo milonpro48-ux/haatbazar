@@ -25,5 +25,7 @@ jobs:
         run: npm run check:server
       - name: Validate marketplace catalog
         run: npm run validate:catalog
+      - name: Exercise API order and integration guards
+        run: npm run test:api
       - name: TypeScript and production build
         run: npm run build
