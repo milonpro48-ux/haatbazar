@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Search, Plus, Leaf, Truck, BadgeCheck, Store } from "lucide-react";
+import { Search, Plus, Leaf, Truck, BadgeCheck, Store, ChevronDown, MapPin } from "lucide-react";
 import { fetchListings, fetchListingById, type Listing } from "@/lib/api";
 import { CATEGORIES, DISTRICTS, bn, money, labelOf, unitLabel } from "@/lib/data";
 import { DISTRICT_SLUGS, productSeo } from "@/lib/seo";
@@ -80,8 +80,14 @@ export default function Home() {
     if (showAnalytics) return;
     setLoading(true);
     const t = setTimeout(async () => {
-      const r = await fetchListings({ search, category: routeCategory?.key || category, subcategory: subcategory || undefined, district: routeDistrict || district, saleType: saleType || undefined });
-      setItems(r.items); setDemo(r.demo); setLoading(false);
+      try {
+        const r = await fetchListings({ search, category: routeCategory?.key || category, subcategory: subcategory || undefined, district: routeDistrict || district, saleType: saleType || undefined });
+        setItems(r.items); setDemo(r.demo);
+      } catch {
+        setItems([]); setDemo(false);
+      } finally {
+        setLoading(false);
+      }
     }, 250);
     return () => clearTimeout(t);
   }, [search, category, subcategory, saleType, district, tick, showAnalytics, routeCategory?.key, routeDistrict]);
@@ -142,8 +148,19 @@ export default function Home() {
 
         <h2 className="mb-3 mt-10 text-xl font-bold">জনপ্রিয় ক্যাটাগরি</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{CATEGORIES.map(c => <Link key={c.key} href={`/category/${c.slug}`} className="rounded-xl border bg-card p-3 hover:border-emerald-600"><div className="text-2xl">{c.emoji}</div><div className="mt-1 font-semibold">{c.label}</div><div className="mt-1 text-xs text-muted-foreground">{c.subcategories.slice(0,3).join(" · ")}</div></Link>)}</div>
-        <h2 className="mb-3 mt-10 text-xl font-bold">জেলা অনুযায়ী কেনাকাটা</h2>
-        <div className="flex flex-wrap gap-2">{DISTRICTS.map(d => <Link key={d} href={`/district/${slugifyBn(d)}`} className="rounded-full border px-3 py-1.5 text-sm hover:border-emerald-600">{d}</Link>)}</div>
+        <section className="mt-10 max-w-md rounded-2xl border bg-card p-4">
+          <h2 className="mb-3 text-xl font-bold">জেলা অনুযায়ী কেনাকাটা</h2>
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border bg-background px-4 py-3 font-semibold hover:border-emerald-600">
+              <span className="flex items-center gap-2"><MapPin size={18} className="text-emerald-700" /> জেলা নির্বাচন করুন</span>
+              <ChevronDown size={18} className="transition group-open:rotate-180" />
+            </summary>
+            <div className="mt-2 max-h-60 overflow-y-auto overscroll-contain rounded-xl border bg-background p-1" role="listbox" aria-label="জেলা অনুযায়ী কেনাকাটা">
+              {DISTRICTS.map(d => <Link key={d} href={`/district/${slugifyBn(d)}`} className="flex min-h-11 items-center border-b px-3 py-2 last:border-0 hover:bg-emerald-50 hover:text-emerald-800 dark:hover:bg-emerald-950">{d}<span className="ml-auto text-xs text-muted-foreground">পণ্য দেখুন →</span></Link>)}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">তালিকায় একসঙ্গে প্রায় ৫টি জেলা দেখুন; স্ক্রল করে বাকি জেলা বেছে নিন।</p>
+          </details>
+        </section>
         <h2 className="mb-3 mt-10 text-xl font-bold">কেন হাটবাজার?</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {why.map((w) => (
