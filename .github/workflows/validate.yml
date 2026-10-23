@@ -1,0 +1,30 @@
+name: HaatBazar validation
+
+on:
+  push:
+    branches: [main, audit/fix-marketplace-checks]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Check server syntax
+        run: npm run check:server
+      - name: Validate marketplace catalog
+        run: npm run validate:catalog
+      - name: TypeScript and production build
+        run: npm run build
