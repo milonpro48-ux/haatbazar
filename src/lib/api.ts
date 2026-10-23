@@ -127,7 +127,7 @@ export interface OrderInput {
 }
 
 // POST /api/orders (নতুন API)। সার্ভারে না থাকলে ব্রাউজারে সেভ হয়।
-export async function createOrder(body: OrderInput): Promise<{status:"ok"; id:string} | {status:"login"|"error"}> {
+export async function createOrder(body: OrderInput): Promise<{status:"ok"; id:string} | {status:"login"} | {status:"error"}> {
   try {
     const res = await fetch(`${BASE}/orders`, {
       method: "POST", credentials: "include",
