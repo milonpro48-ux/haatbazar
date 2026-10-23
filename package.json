@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit",
     "check:server": "node --check server.js",
     "validate:catalog": "node scripts/validate-catalog.mjs",
+    "test:api": "node scripts/test-api.mjs",
     "backup": "node scripts/backup-db.mjs",
     "seo:audit": "node scripts/seo-audit.mjs",
     "check:integrations": "node scripts/check-integrations.mjs"

@@ -25,10 +25,17 @@ export function OrderDialog({ item, onClose, onDone }: { item: Listing; onClose:
       buyerName: String(f.get("name")), buyerPhone: String(f.get("phone")), buyerEmail: String(f.get("email")), address: String(f.get("address")),
     });
     setBusy(false);
-    if (r.status === "login") { setNeedLogin(true); return; }
-    if (r.status === "error") { setError("অর্ডার পাঠানো যায়নি। ইন্টারনেট সংযোগ ও সার্ভার পরীক্ষা করে আবার চেষ্টা করুন।"); return; }
+    if (r.status !== "ok") {
+      if (r.status === "login") {
+        setNeedLogin(true);
+      } else {
+        setError("অর্ডার পাঠানো যায়নি। ইন্টারনেট সংযোগ ও সার্ভার পরীক্ষা করে আবার চেষ্টা করুন।");
+      }
+      return;
+    }
     if (paymentMethod !== "later") {
       setPendingPaymentOrderId(r.id);
+      setBusy(true);
       const redirect = await startPayment(r.id, paymentMethod);
       setBusy(false);
       if (redirect) { window.location.assign(redirect); return; }

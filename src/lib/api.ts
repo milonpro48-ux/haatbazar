@@ -8,7 +8,7 @@ export interface Listing {
 export interface Filters { search?: string; category?: string; subcategory?: string; district?: string; saleType?: string }
 export type ListingInput = Omit<Listing, "id" | "images" | "upazila"> & { phone: string; images: string[]; subcategory: string; saleType: "retail" | "wholesale" | "both"; minOrderQuantity: number; deliveryAvailable: boolean };
 
-import { isValidCategory, isValidDistrict } from "./data";
+import { CATEGORIES, DISTRICTS, isValidCategory, isValidDistrict } from "./data";
 
 const BASE = "/api";
 export const LOGIN_URL = `${BASE}/login?returnTo=/`;
@@ -16,16 +16,35 @@ export const LOGIN_URL = `${BASE}/login?returnTo=/`;
 const mk = (id: number, title: string, category: string, district: string, price: number, unit: string, sellerName: string, phone: string): Listing =>
   ({ id: String(id), title, category, district, price, unit, quantity: 10, negotiable: true, sellerName, description: "নমুনা বিজ্ঞাপন", images: [], phone });
 
-const SAMPLE: Listing[] = [
-  mk(1, "আমন ধান (ব্রি-ধান ৪৯)", "agriculture", "বগুড়া", 1250, "maund", "করিম মিয়া", "01711000001"),
-  mk(2, "পদ্মার তাজা ইলিশ", "grocery", "চাঁদপুর", 1400, "kg", "মা মাছ ঘাট", "01711000003"),
-  mk(3, "দুধেল গাভী", "livestock-poultry-fish", "খুলনা", 85000, "piece", "মোস্তফা ডেইরি", "01711000011"),
-  mk(4, "ইউরিয়া সার (৫০ কেজি)", "agriculture", "রাজশাহী", 2200, "bag", "কৃষি সেবা কেন্দ্র", "01711000006"),
-  mk(5, "তাজা পটল ও বেগুন", "grocery", "ঢাকা", 55, "kg", "কাওরান বাজার আড়ত", "01711000013"),
-  mk(6, "পাটের আঁশ (উন্নত মান)", "agriculture", "যশোর", 3200, "maund", "কৃষক সমবায়", "01711000015"),
-  mk(7, "সোলার সেচ পাম্প", "electronics", "রংপুর", 95000, "piece", "সবুজ এনার্জি", "01711000017"),
-  mk(8, "ইলেকট্রিক ধান মাড়াই মেশিন", "machinery", "ময়মনসিংহ", 42000, "piece", "আধুনিক কৃষি যন্ত্র", "01711000018"),
+const SAMPLE_IMAGES = [
+  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1517663400263-0251440c45dc?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=900&q=80",
 ];
+const SAMPLE: Listing[] = CATEGORIES.flatMap((category, categoryIndex) =>
+  category.subcategories.slice(0, 5).map((subcategory, productIndex) => {
+    const saleTypes: NonNullable<Listing["saleType"]>[] = ["retail", "wholesale", "both", "retail", "wholesale"];
+    return {
+      id: "demo-" + category.key + "-" + (productIndex + 1),
+      title: subcategory + " — নমুনা পণ্য " + (productIndex + 1),
+      category: category.key, subcategory, district: DISTRICTS[(categoryIndex * 5 + productIndex) % DISTRICTS.length],
+      price: (categoryIndex + 1) * 125 + (productIndex + 1) * 75,
+      unit: category.key === "grocery" || category.key === "agriculture" ? "kg" : "piece",
+      quantity: 20 + productIndex * 5, negotiable: productIndex % 2 === 0,
+      sellerName: "হাটবাজার নমুনা বিক্রেতা " + (categoryIndex + 1),
+      businessName: category.label + " নমুনা দোকান",
+      description: subcategory + " বিভাগের প্রদর্শনী নমুনা পণ্য। অর্ডারের আগে পণ্যের মান, মজুদ, প্রতি এককের দাম ও ডেলিভারির শর্ত বিক্রেতার সঙ্গে নিশ্চিত করুন।",
+      images: [SAMPLE_IMAGES[(categoryIndex * 3 + productIndex) % SAMPLE_IMAGES.length]],
+      saleType: saleTypes[productIndex], minOrderQuantity: productIndex === 1 || productIndex === 4 ? 5 : 1,
+      deliveryAvailable: true,
+    };
+  })
+);
 
 export async function fetchListingById(id: string): Promise<Listing | null> {
   try { const res = await fetch(`${BASE}/listings/${encodeURIComponent(id)}`, { credentials: "include" }); if (res.ok) return await res.json(); } catch {}
@@ -108,7 +127,7 @@ export interface OrderInput {
 }
 
 // POST /api/orders (নতুন API)। সার্ভারে না থাকলে ব্রাউজারে সেভ হয়।
-export async function createOrder(body: OrderInput): Promise<{status:"ok"; id:string} | {status:"login"|"error"}> {
+export async function createOrder(body: OrderInput): Promise<{status:"ok"; id:string} | {status:"login"} | {status:"error"}> {
   try {
     const res = await fetch(`${BASE}/orders`, {
       method: "POST", credentials: "include",
