@@ -18,9 +18,11 @@ export function ListingCard({ item, onOrder }: { item: Listing; onOrder: (l: Lis
 
   return (
     <div className="overflow-hidden rounded-2xl border bg-card transition hover:-translate-y-1 hover:shadow-md">
-      <div className="grid h-32 place-items-center bg-emerald-50 text-6xl dark:bg-emerald-950">
-        {item.images?.[0] ? <img src={item.images[0]} alt={item.title} className="h-full w-full object-cover" /> : emojiOf(item.category)}
-      </div>
+      <Link href={`/product/${item.id}`} aria-label={`পণ্যের বিস্তারিত দেখুন: ${item.title}`} className="block h-32 bg-emerald-50 dark:bg-emerald-950">
+        <div className="grid h-full w-full place-items-center text-6xl">
+          {item.images?.[0] ? <img src={item.images[0]} alt={item.title} className="h-full w-full object-cover" /> : emojiOf(item.category)}
+        </div>
+      </Link>
       <div className="space-y-1 p-3">
         <h3 className="font-semibold leading-snug"><Link href={`/product/${item.id}`} className="hover:text-emerald-700 hover:underline">{item.title}</Link></h3>
         <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
