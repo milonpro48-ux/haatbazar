@@ -98,24 +98,54 @@ try {
 
     if ($action === 'me' && $_SERVER['REQUEST_METHOD'] === 'GET') out(['user' => currentUser(), 'csrf' => $_SESSION['csrf']]);
 
+    // Browser pages for the InfinityFree deployment (the Node server is not available there).
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'login') {
+        header('Content-Type: text/html; charset=utf-8');
+        $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES, 'UTF-8');
+        $returnTo = cleanString($_GET['returnTo'] ?? '/api/account', 300);
+        if ($returnTo === '' || $returnTo[0] !== '/' || str_starts_with($returnTo, '//')) $returnTo = '/api/account';
+        $returnEsc = htmlspecialchars($returnTo, ENT_QUOTES, 'UTF-8');
+        echo '<!doctype html><html lang="bn"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>লগইন | হাটবাজার</title><body style="font-family:system-ui,sans-serif;max-width:460px;margin:40px auto;padding:20px;color:#153c2a"><a href="/">← হাটবাজার</a><h1>লগইন করুন</h1><form method="post" action="/api/login"><input type="hidden" name="_csrf" value="'.$csrfToken.'"><input type="hidden" name="returnTo" value="'.$returnEsc.'"><label>ইমেইল<br><input style="box-sizing:border-box;width:100%;padding:12px;margin:8px 0 16px" name="email" type="email" required autocomplete="email"></label><label>পাসওয়ার্ড<br><input style="box-sizing:border-box;width:100%;padding:12px;margin:8px 0 16px" name="password" type="password" required autocomplete="current-password"></label><button style="padding:12px 20px;background:#166534;color:white;border:0;border-radius:8px">লগইন</button></form><p>নতুন ব্যবহারকারী? <a href="/api/register">সাইন আপ করুন</a></p></body></html>';
+        exit;
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'register') {
+        header('Content-Type: text/html; charset=utf-8');
+        $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES, 'UTF-8');
+        echo '<!doctype html><html lang="bn"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>সাইন আপ | হাটবাজার</title><body style="font-family:system-ui,sans-serif;max-width:460px;margin:40px auto;padding:20px;color:#153c2a"><a href="/">← হাটবাজার</a><h1>নতুন অ্যাকাউন্ট খুলুন</h1><form method="post" action="/api/register"><input type="hidden" name="_csrf" value="'.$csrfToken.'"><label>আপনার নাম<br><input style="box-sizing:border-box;width:100%;padding:12px;margin:8px 0 16px" name="name" required minlength="2" maxlength="100" autocomplete="name"></label><label>ইমেইল<br><input style="box-sizing:border-box;width:100%;padding:12px;margin:8px 0 16px" name="email" type="email" required maxlength="190" autocomplete="email"></label><label>মোবাইল নম্বর<br><input style="box-sizing:border-box;width:100%;padding:12px;margin:8px 0 16px" name="phone" type="tel" maxlength="30" autocomplete="tel"></label><label>পাসওয়ার্ড (কমপক্ষে ১০ অক্ষর)<br><input style="box-sizing:border-box;width:100%;padding:12px;margin:8px 0 16px" name="password" type="password" required minlength="10" autocomplete="new-password"></label><label>অ্যাকাউন্টের ধরন<br><select style="width:100%;padding:12px;margin:8px 0 16px" name="role"><option value="buyer">ক্রেতা</option><option value="seller">বিক্রেতা</option></select></label><button style="padding:12px 20px;background:#166534;color:white;border:0;border-radius:8px">অ্যাকাউন্ট তৈরি করুন</button></form><p>আগে অ্যাকাউন্ট আছে? <a href="/api/login">লগইন</a></p></body></html>';
+        exit;
+    }
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'account') {
+        $u = currentUser();
+        if (!$u) { header('Location: /api/login?returnTo=%2Fapi%2Faccount', true, 302); exit; }
+        header('Content-Type: text/html; charset=utf-8');
+        $name = htmlspecialchars((string)($u['name'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $email = htmlspecialchars((string)($u['email'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $role = htmlspecialchars((string)($u['role'] ?? 'buyer'), ENT_QUOTES, 'UTF-8');
+        $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES, 'UTF-8');
+        echo '<!doctype html><html lang="bn"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>আমার অ্যাকাউন্ট | হাটবাজার</title><body style="font-family:system-ui,sans-serif;max-width:600px;margin:40px auto;padding:20px;color:#153c2a"><a href="/">← হাটবাজার</a><h1>আমার অ্যাকাউন্ট</h1><section style="border:1px solid #ddd;border-radius:12px;padding:20px"><p><strong>নাম:</strong> '.$name.'</p><p><strong>ইমেইল:</strong> '.$email.'</p><p><strong>অ্যাকাউন্ট:</strong> '.$role.'</p></section><p><a href="/">পণ্য দেখুন</a></p><form method="post" action="/api/logout"><input type="hidden" name="_csrf" value="'.$csrfToken.'"><button style="padding:10px 18px">লগআউট</button></form></body></html>';
+        exit;
+    }
+
     if ($action === 'register') {
         requirePost(); $b = body(); csrf();
         $name = cleanString($b['name'] ?? '', 100);
         $email = strtolower(cleanString($b['email'] ?? '', 190));
         $phone = cleanString($b['phone'] ?? '', 30);
         $password = is_string($b['password'] ?? null) ? $b['password'] : '';
+        $role = in_array(($b['role'] ?? 'buyer'), ['buyer','seller'], true) ? (string)($b['role'] ?? 'buyer') : 'buyer';
         if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 10) out(['error' => 'Name, valid email and password of at least 10 characters are required'], 422);
         $hash = password_hash($password, PASSWORD_DEFAULT);
         try {
-            $st = $pdo->prepare("INSERT INTO users(name,email,phone,password_hash,role) VALUES(?,?,?,?, 'buyer')");
-            $st->execute([$name,$email,$phone,$hash]);
+            $st = $pdo->prepare("INSERT INTO users(name,email,phone,password_hash,role) VALUES(?,?,?,?,?)");
+            $st->execute([$name,$email,$phone,$hash,$role]);
         } catch (PDOException $e) {
             if ((string)$e->getCode() === '23000') out(['error' => 'An account with this email already exists'], 409);
             throw $e;
         }
         session_regenerate_id(true);
-        $_SESSION['user'] = ['id'=>(int)$pdo->lastInsertId(),'name'=>$name,'email'=>$email,'role'=>'buyer'];
+        $_SESSION['user'] = ['id'=>(int)$pdo->lastInsertId(),'name'=>$name,'email'=>$email,'role'=>$role];
         $_SESSION['csrf'] = bin2hex(random_bytes(32));
+        if (!str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')) { header('Location: /api/account', true, 303); exit; }
         out(['user'=>$_SESSION['user'],'csrf'=>$_SESSION['csrf']], 201);
     }
 
@@ -129,13 +159,20 @@ try {
         session_regenerate_id(true);
         $_SESSION['user'] = ['id'=>(int)$row['id'],'name'=>$row['name'],'email'=>$row['email'],'role'=>$row['role']];
         $_SESSION['csrf'] = bin2hex(random_bytes(32));
-        out(['user'=>$_SESSION['user'],'csrf'=>$_SESSION['csrf']]);
+        if (!str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')) {
+            $returnTo = cleanString($b['returnTo'] ?? '/api/account', 300);
+            if ($returnTo === '' || $returnTo[0] !== '/' || str_starts_with($returnTo, '//')) $returnTo = '/api/account';
+            header('Location: '.$returnTo, true, 303); exit;
+        }
+        out(['user'=>$_SESSION['user'],'csrf'=>$_SESSION['csrf']);
     }
 
     if ($action === 'logout') {
         requirePost(); csrf(); $_SESSION = [];
         if (ini_get('session.use_cookies')) { $p = session_get_cookie_params(); setcookie(session_name(), '', time()-42000, $p['path'], $p['domain'], $p['secure'], $p['httponly']); }
-        session_destroy(); out(['ok'=>true]);
+        session_destroy();
+        if (!str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')) { header('Location: /', true, 303); exit; }
+        out(['ok'=>true]);
     }
 
     if ($action === 'checkout') {
