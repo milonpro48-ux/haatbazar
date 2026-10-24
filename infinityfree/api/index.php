@@ -75,6 +75,9 @@ function sslValidate(array $c, string $valId): array {
 }
 
 $action = cleanString($_GET['action'] ?? '', 60);
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+// Compatibility alias for the existing React frontend's public listing endpoint.
+if ($action === '' && preg_match('~/api/listings/?$~', $requestPath) && $_SERVER['REQUEST_METHOD'] === 'GET') $action = 'products';
 try {
     $pdo = db($config);
     if ($action === 'csrf') out(['csrf' => $_SESSION['csrf']]);
@@ -90,7 +93,7 @@ try {
         $st = $pdo->prepare($sql); $st->execute($params);
         $items = $st->fetchAll();
         foreach ($items as &$item) $item['images'] = json_decode($item['images'] ?: '[]', true) ?: [];
-        out(['products' => $items]);
+        out(['products' => $items, 'items' => $items, 'total' => count($items), 'page' => 1, 'limit' => 100]);
     }
 
     if ($action === 'me' && $_SERVER['REQUEST_METHOD'] === 'GET') out(['user' => currentUser(), 'csrf' => $_SESSION['csrf']]);
