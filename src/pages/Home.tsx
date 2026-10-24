@@ -46,7 +46,13 @@ export default function Home() {
   useEffect(() => {
     if (!productId) { setProduct(null); return; }
     let active = true;
-    fetchListingById(productId).then(item => { if (active) { setProduct(item); if (item) trackEvent("listing_view", { listingId: item.id, category: item.category }); } });
+    fetchListingById(productId).then(item => {
+      const found = item || getSampleListings().find(sample => String(sample.id) === String(productId)) || null;
+      if (active) { setProduct(found); if (found) trackEvent("listing_view", { listingId: found.id, category: found.category }); }
+    }).catch(() => {
+      const sample = getSampleListings().find(entry => String(entry.id) === String(productId)) || null;
+      if (active) setProduct(sample);
+    });
     return () => { active = false; };
   }, [productId]);
 
