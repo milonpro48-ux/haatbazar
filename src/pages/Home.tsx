@@ -116,6 +116,7 @@ export default function Home() {
           <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-emerald-800 dark:text-emerald-300"><span className="grid h-10 w-10 place-items-center rounded-xl bg-orange-500 text-xl text-white shadow-sm">🛍</span><span>Haat<span className="text-orange-600">Bazar</span><small className="block -mt-1 text-[10px] font-medium tracking-wide text-muted-foreground">Shop Smart, Live Better</small></span></Link>
           <div className="flex items-center gap-2">
             <a href="/api/login" className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">লগইন</a>
+            <a href="/api/register" className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600">সাইন আপ</a>
             <a href="/api/account" className="hidden rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted sm:inline-flex">আমার অ্যাকাউন্ট</a>
             <button onClick={() => setPosting(true)} className="flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700">
               <Plus size={18} /> বিজ্ঞাপন দিন
