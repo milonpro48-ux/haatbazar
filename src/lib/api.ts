@@ -1,7 +1,7 @@
 // আপনার openapi.yaml অনুযায়ী লেখা। API-র সাথে কথা হয় শুধু এই ফাইলে।
 export interface Listing {
   id: string; title: string; category: string; subcategory?: string; district: string; upazila?: string | null;
-  price: number; unit: string; quantity: number; negotiable: boolean;
+  price: number; unit: string; quantity: number; negotiable: boolean; discountPercent?: number;
   sellerName: string; description: string; images: string[]; phone?: string; sellerVerified?: boolean;
   saleType?: "retail" | "wholesale" | "both"; minOrderQuantity?: number; businessName?: string; deliveryAvailable?: boolean;
 }
