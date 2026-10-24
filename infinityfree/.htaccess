@@ -1,0 +1,17 @@
+Options -Indexes
+DirectoryIndex index.html index.php
+
+# Keep configuration and SQL files private if this folder is uploaded into public_html.
+<FilesMatch "^(config\.php|config\.example\.php|schema\.sql)$">
+  Require all denied
+</FilesMatch>
+
+# Never serve environment files, logs, local databases, or source-control metadata.
+<FilesMatch "^(\.env|.*\.log|.*\.sqlite|.*\.db)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
