@@ -1,16 +1,23 @@
 Options -Indexes
 DirectoryIndex index.html index.php
 
-# Keep configuration and SQL files private if this folder is uploaded into public_html.
+# Send the account URLs to the PHP backend on InfinityFree.
+RewriteEngine On
+RewriteRule ^api/login/?$ api/index.php?action=login [QSA,L]
+RewriteRule ^api/register/?$ api/index.php?action=register [QSA,L]
+RewriteRule ^api/account/?$ api/index.php?action=account [QSA,L]
+RewriteRule ^api/logout/?$ api/index.php?action=logout [QSA,L]
+RewriteRule ^api/me/?$ api/index.php?action=me [QSA,L]
+RewriteRule ^api/csrf/?$ api/index.php?action=csrf [QSA,L]
+RewriteRule ^api/listings/?$ api/index.php?action=products [QSA,L]
+
+# Keep configuration and SQL files private.
 <FilesMatch "^(config\.php|config\.example\.php|schema\.sql)$">
   Require all denied
 </FilesMatch>
-
-# Never serve environment files, logs, local databases, or source-control metadata.
 <FilesMatch "^(\.env|.*\.log|.*\.sqlite|.*\.db)$">
   Require all denied
 </FilesMatch>
-
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
