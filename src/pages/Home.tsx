@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Search, Plus, Leaf, Truck, BadgeCheck, Store, ChevronDown, MapPin } from "lucide-react";
-import { fetchListings, fetchListingById, type Listing } from "@/lib/api";
+import { fetchListings, fetchListingById, getSampleListings, type Listing } from "@/lib/api";
 import { CATEGORIES, DISTRICTS, bn, money, labelOf, unitLabel } from "@/lib/data";
 import { DISTRICT_SLUGS, productSeo } from "@/lib/seo";
 import { ListingCard } from "@/components/ListingCard";
@@ -92,14 +92,22 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [search, category, subcategory, saleType, district, tick, showAnalytics, routeCategory?.key, routeDistrict]);
 
+  const useSampleListings = !loading && items.length === 0 && !search.trim() && !district && !routeDistrict;
+  const displayItems = items.length ? items : useSampleListings
+    ? getSampleListings().filter(i =>
+        (!routeCategory?.key && !category || i.category === (routeCategory?.key || category)) &&
+        (!subcategory || i.subcategory === subcategory) &&
+        (!saleType || i.saleType === saleType || i.saleType === "both"))
+    : [];
+
   if (showAnalytics) return <AdminAnalytics onBack={() => setShowAnalytics(false)} />;
   if (productId) return <div className="min-h-screen bg-background text-foreground"><header className="border-b p-4"><Link href="/" className="text-2xl font-bold text-emerald-700">🌾 হাটবাজার</Link></header><main className="mx-auto max-w-4xl p-4">{!product ? <p className="py-12 text-center">পণ্য লোড হচ্ছে অথবা পণ্যটি আর উপলভ্য নেই।</p> : <article className="grid gap-6 rounded-2xl border bg-card p-5 md:grid-cols-2"><div className="grid min-h-64 place-items-center rounded-xl bg-emerald-50 text-7xl">{product.images?.[0] ? <img src={product.images[0]} alt={product.title} className="h-full max-h-96 w-full rounded-xl object-cover" /> : "🧺"}</div><div><p className="text-sm text-muted-foreground">{labelOf(product.category)}{product.subcategory ? ` · ${product.subcategory}` : ""} · {product.district}</p><h1 className="my-2 text-2xl font-bold">{product.title}</h1><p className="text-2xl font-bold text-emerald-700">{money(product.price)} / {unitLabel(product.unit)}</p><p className="my-3 whitespace-pre-wrap">{product.description}</p><p>বিক্রেতা: {product.businessName || product.sellerName} {product.sellerVerified && <span className="font-semibold text-emerald-700">· ✓ যাচাইকৃত</span>}</p><p>মজুদ: {bn(product.quantity)} {unitLabel(product.unit)}</p><p>বিক্রির ধরন: {product.saleType === "wholesale" ? "পাইকারি" : product.saleType === "retail" ? "খুচরা" : "খুচরা ও পাইকারি"}</p><p>সর্বনিম্ন অর্ডার: {bn(product.minOrderQuantity || 1)} {unitLabel(product.unit)}</p><button onClick={() => setOrdering(product)} className="mt-4 w-full rounded-lg bg-amber-400 py-3 font-bold text-emerald-950">অর্ডার করুন</button></div></article>}</main>{ordering && <OrderDialog item={ordering} onClose={() => setOrdering(null)} onDone={m => { setToast(m); setTimeout(() => setToast(""), 3500); }} />}{toast && <div className="fixed bottom-6 left-1/2 -translate-x-1/2 rounded-lg bg-foreground px-4 py-2 text-background">{toast}</div>}</div>;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b-4 border-orange-500 bg-card/95 shadow-sm backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4">
-          <Link href="/" className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">🌾 হাটবাজার</Link>
+          <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-emerald-800 dark:text-emerald-300"><span className="grid h-10 w-10 place-items-center rounded-xl bg-orange-500 text-xl text-white shadow-sm">🛍</span><span>Haat<span className="text-orange-600">Bazar</span><small className="block -mt-1 text-[10px] font-medium tracking-wide text-muted-foreground">Shop Smart, Live Better</small></span></Link>
           <div className="flex items-center gap-2">
             <a href="/api/login" className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">লগইন</a>
             <a href="/api/account" className="hidden rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted sm:inline-flex">আমার অ্যাকাউন্ট</a>
@@ -110,9 +118,9 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="bg-gradient-to-br from-emerald-700 to-emerald-950 py-10 text-white">
+      <div className="bg-orange-500 px-4 py-1.5 text-center text-xs font-semibold text-white">🇧🇩 সারা বাংলাদেশে কেনাবেচা · Help & Support · Become a Seller</div>\n      <nav className="bg-emerald-900 text-white"><div className="mx-auto flex max-w-6xl gap-6 overflow-x-auto px-4 py-3 text-sm font-semibold"><Link href="/" className="shrink-0">☰ সব ক্যাটাগরি</Link><a href="#products" className="shrink-0">আজকের পণ্য</a><a href="#popular" className="shrink-0">জনপ্রিয় ক্যাটাগরি</a><a href="#why" className="shrink-0">কেন হাটবাজার</a></div></nav>\n      <section className="bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 py-10 text-white">
         <div className="mx-auto max-w-6xl px-4">
-          <h1 className="text-3xl font-bold leading-tight md:text-5xl">{routeCategory ? `${routeCategory.label} — খুচরা ও পাইকারি বাজার` : routeDistrict ? `${routeDistrict} জেলার অনলাইন হাটবাজার` : "বাংলাদেশের কেনাবেচা, এখন হাটবাজারে"}</h1>
+          <h1 className="max-w-5xl text-3xl font-extrabold leading-tight md:text-5xl">{routeCategory ? `${routeCategory.label} — খুচরা ও পাইকারি বাজার` : routeDistrict ? `${routeDistrict} জেলার অনলাইন হাটবাজার` : "বাংলাদেশের কেনাবেচা, এখন হাটবাজারে"}</h1>
           <p className="mb-5 mt-2 opacity-90">খুচরা ও পাইকারি পণ্য খুঁজুন, বিক্রি করুন এবং সরাসরি বিক্রেতার সঙ্গে যোগাযোগ করুন।</p>
           <p className="mb-3 max-w-3xl text-sm opacity-90">{routeCategory ? `${routeCategory.label} বিভাগে পণ্য, খুচরা দাম এবং পাইকারি সরবরাহকারী খুঁজুন।` : "সারা বাংলাদেশে পণ্য কিনুন বা বিক্রি করুন—খুচরা ও পাইকারি, দুই ধরনের ক্রেতার জন্যই।"}</p>
           <div className="grid max-w-3xl gap-2 rounded-2xl bg-card p-2 text-foreground md:grid-cols-[1fr_190px]">
@@ -129,10 +137,10 @@ export default function Home() {
       </section>
 
       <main className="mx-auto max-w-6xl px-4 py-5">
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="flex gap-2 overflow-x-auto border-b pb-3">
           {[{ key: "", label: "সব", emoji: "🧺" }, ...CATEGORIES].map((c) => (
             <button key={c.key} onClick={() => { setCategory(c.key); setSubcategory(""); setLocation(c.key ? `/category/${CATEGORIES.find(x => x.key === c.key)?.slug}` : "/"); }}
-              className={`shrink-0 rounded-full border px-4 py-1.5 ${(category === c.key || routeCategory?.key === c.key) ? "border-emerald-600 bg-emerald-600 text-white" : "bg-card"}`}>
+              className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${(category === c.key || routeCategory?.key === c.key) ? "border-orange-500 bg-orange-500 text-white shadow-sm" : "bg-card hover:border-orange-400"}` }>
               {c.emoji} {c.label}
             </button>
           ))}
@@ -140,13 +148,13 @@ export default function Home() {
 
         {routeCategory && <div className="mb-3 flex flex-wrap gap-2">{routeCategory.subcategories.map(sub => <button key={sub} onClick={() => setSubcategory(subcategory === sub ? "" : sub)} className={`rounded-full border px-3 py-1 text-sm ${subcategory === sub ? "border-emerald-600 bg-emerald-600 text-white" : "bg-card"}`}>{sub}</button>)}</div>}
         <div className="mb-3 flex flex-wrap items-center gap-2"><span className="text-sm font-semibold">বিক্রির ধরন:</span>{[{v:"",l:"সব"},{v:"retail",l:"খুচরা"},{v:"wholesale",l:"পাইকারি"},{v:"both",l:"দুই ধরনের"}].map(o => <button key={o.v} onClick={() => setSaleType(o.v)} className={`rounded-full border px-3 py-1 text-sm ${saleType === o.v ? "border-emerald-600 bg-emerald-600 text-white" : "bg-card"}`}>{o.l}</button>)}</div>
-        <h2 className="my-4 text-xl font-bold">{routeCategory?.label || (category ? CATEGORIES.find((c) => c.key === category)?.label : "সব বিজ্ঞাপন")} ({bn(items.length)})</h2>
-        {demo && <p className="mb-3 rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-900">API থেকে ডেটা আসেনি, তাই নমুনা বিজ্ঞাপন দেখানো হচ্ছে।</p>}
+        <div id="products" className="mt-5 flex items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-orange-600">HaatBazar Marketplace</p><h2 className="my-1 text-xl font-extrabold md:text-2xl">{routeCategory?.label || (category ? CATEGORIES.find((c) => c.key === category)?.label : "সব পণ্য ও বিজ্ঞাপন")} <span className="text-emerald-700">({bn(displayItems.length)})</span></h2></div><span className="hidden rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 sm:inline-flex">খুচরা ও পাইকারি</span></div>
+        {(demo || useSampleListings) && <p className="mb-3 mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">🧪 ডেমো প্রিভিউ: নিচের পণ্যগুলো শুধু ডিজাইন দেখানোর নমুনা, বাস্তব বিক্রেতার বিজ্ঞাপন নয়। ডাটাবেসে পণ্য যোগ হলে লাইভ পণ্য দেখাবে।</p>}
         {loading ? <p className="py-10 text-center text-muted-foreground">লোড হচ্ছে…</p>
           : items.length === 0 ? <p className="py-10 text-center text-muted-foreground">কোনো বিজ্ঞাপন পাওয়া যায়নি।</p>
           : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">{items.filter(i => (!subcategory || i.subcategory === subcategory) && (!saleType || (i.saleType || "both") === saleType || i.saleType === "both")).map((i) => <ListingCard key={i.id} item={i} onOrder={setOrdering} />)}</div>}
 
-        <h2 className="mb-3 mt-10 text-xl font-bold">জনপ্রিয় ক্যাটাগরি</h2>
+        <h2 id="popular" className="mb-3 mt-10 border-l-4 border-orange-500 pl-3 text-xl font-extrabold">জনপ্রিয় ক্যাটাগরি</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{CATEGORIES.map(c => <Link key={c.key} href={`/category/${c.slug}`} className="rounded-xl border bg-card p-3 hover:border-emerald-600"><div className="text-2xl">{c.emoji}</div><div className="mt-1 font-semibold">{c.label}</div><div className="mt-1 text-xs text-muted-foreground">{c.subcategories.slice(0,3).join(" · ")}</div></Link>)}</div>
         <section className="mt-10 max-w-md rounded-2xl border bg-card p-4">
           <h2 className="mb-3 text-xl font-bold">জেলা অনুযায়ী কেনাকাটা</h2>
@@ -161,7 +169,7 @@ export default function Home() {
             <p className="mt-2 text-xs text-muted-foreground">তালিকায় একসঙ্গে প্রায় ৫টি জেলা দেখুন; স্ক্রল করে বাকি জেলা বেছে নিন।</p>
           </details>
         </section>
-        <h2 className="mb-3 mt-10 text-xl font-bold">কেন হাটবাজার?</h2>
+        <h2 id="why" className="mb-3 mt-10 border-l-4 border-orange-500 pl-3 text-xl font-extrabold">কেন হাটবাজার?</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {why.map((w) => (
             <div key={w.title} className="rounded-2xl border bg-card p-4">
