@@ -1,38 +1,33 @@
-import { useState } from "react";
-import { Phone, MapPin, ShoppingCart } from "lucide-react";
-import { revealPhone, type Listing } from "@/lib/api";
+import { emojiOf, money, unitLabel } from "@/lib/data";
+import type { Listing } from "@/lib/api";
 import { Link } from "wouter";
-import { emojiOf, labelOf, money, bn, unitLabel } from "@/lib/data";
-import { trackEvent } from "@/lib/analytics";
 
-export function ListingCard({ item, onOrder }: { item: Listing; onOrder: (l: Listing) => void }) {
-  const [phone, setPhone] = useState(item.phone ?? "");
-  const [err, setErr] = useState("");
-
-
-  async function show() {
-    const r = await revealPhone(item);
-    if (r.phone) { setPhone(r.phone); trackEvent("contact", { listingId: item.id, category: item.category }); }
-    else setErr(r.error === "limit" ? "অনেকবার চেষ্টা হয়েছে, একটু পরে আবার দেখুন" : "নম্বর আনা যায়নি");
-  }
-
+export function ListingCard({ item }: { item: Listing; onOrder: (l: Listing) => void }) {
   return (
     <div className="group overflow-hidden rounded-2xl border bg-card transition hover:-translate-y-1 hover:shadow-lg">
       <Link
         href={`/product/${item.id}`}
-        aria-label={`পণ্যের ছবি দেখুন এবং বিস্তারিত খুলুন: ${item.title}`}
-        className="block aspect-square w-full overflow-hidden bg-emerald-50 dark:bg-emerald-950"
+        aria-label={`পণ্যের বিস্তারিত দেখুন: ${item.title}`}
+        className="block"
       >
-        {item.images?.[0] ? (
-          <img
-            src={item.images[0]}
-            alt={item.title}
-            loading="lazy"
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-          />
-        ) : (
-          <div className="grid h-full w-full place-items-center text-6xl">{emojiOf(item.category)}</div>
-        )}
+        <div className="aspect-square w-full overflow-hidden bg-emerald-50 dark:bg-emerald-950">
+          {item.images?.[0] ? (
+            <img
+              src={item.images[0]}
+              alt={item.title}
+              loading="lazy"
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="grid h-full w-full place-items-center text-6xl">{emojiOf(item.category)}</div>
+          )}
+        </div>
+        <div className="space-y-1 p-3">
+          <h3 className="line-clamp-2 min-h-10 text-sm font-medium leading-5">{item.title}</h3>
+          <p className="text-base font-bold text-emerald-700 dark:text-emerald-400">
+            {money(item.price)} <span className="text-xs font-normal text-muted-foreground">/ {unitLabel(item.unit)}</span>
+          </p>
+        </div>
       </Link>
     </div>
   );
