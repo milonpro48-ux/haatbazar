@@ -149,3 +149,7 @@ export async function startPayment(orderId: string, method: "bkash" | "nagad" | 
     return typeof data.redirectUrl === "string" ? data.redirectUrl : null;
   } catch { return null; }
 }
+
+
+// Clearly labelled demo listings for previewing the marketplace while the live database is empty.
+export function getSampleListings(): Listing[] { return SAMPLE; }
