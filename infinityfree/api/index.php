@@ -164,7 +164,7 @@ try {
             if ($returnTo === '' || $returnTo[0] !== '/' || str_starts_with($returnTo, '//')) $returnTo = '/api/account';
             header('Location: '.$returnTo, true, 303); exit;
         }
-        out(['user'=>$_SESSION['user'],'csrf'=>$_SESSION['csrf']);
+        out(['user'=>$_SESSION['user'],'csrf'=>$_SESSION['csrf']]);
     }
 
     if ($action === 'logout') {
