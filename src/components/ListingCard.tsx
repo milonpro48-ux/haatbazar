@@ -14,7 +14,7 @@ export function ListingCard({ item }: { item: Listing; onOrder: (l: Listing) => 
       >
         <div className="relative aspect-square w-full overflow-hidden bg-emerald-50 dark:bg-emerald-950">
           {discountPercent && discountPercent > 0 ? (
-            <span className="absolute left-2 top-2 z-10 rounded-md bg-red-600 px-2 py-1 text-xs font-bold text-white shadow">
+            <span className="absolute left-2 top-2 z-10 rounded-md bg-amber-400 px-2 py-1 text-xs font-extrabold text-rose-950 shadow">
               {discountPercent}% OFF
             </span>
           ) : null}
@@ -30,8 +30,8 @@ export function ListingCard({ item }: { item: Listing; onOrder: (l: Listing) => 
           )}
         </div>
         <div className="space-y-1 p-3">
-          <h3 className="line-clamp-2 min-h-10 text-sm font-medium leading-5">{item.title}</h3>
-          <p className="text-base font-bold text-emerald-700 dark:text-emerald-400">
+          <h3 className="line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-slate-800 dark:text-slate-100">{item.title}</h3>
+          <p className="text-base font-extrabold text-blue-700 dark:text-sky-400">
             {money(item.price)}
           </p>
         </div>
