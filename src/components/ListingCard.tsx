@@ -1,4 +1,4 @@
-import { emojiOf, money, unitLabel } from "@/lib/data";
+import { emojiOf, money } from "@/lib/data";
 import type { Listing } from "@/lib/api";
 import { Link } from "wouter";
 
@@ -25,7 +25,7 @@ export function ListingCard({ item }: { item: Listing; onOrder: (l: Listing) => 
         <div className="space-y-1 p-3">
           <h3 className="line-clamp-2 min-h-10 text-sm font-medium leading-5">{item.title}</h3>
           <p className="text-base font-bold text-emerald-700 dark:text-emerald-400">
-            {money(item.price)} <span className="text-xs font-normal text-muted-foreground">/ {unitLabel(item.unit)}</span>
+            {money(item.price)}
           </p>
         </div>
       </Link>
