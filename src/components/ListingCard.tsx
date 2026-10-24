@@ -3,6 +3,8 @@ import type { Listing } from "@/lib/api";
 import { Link } from "wouter";
 
 export function ListingCard({ item }: { item: Listing; onOrder: (l: Listing) => void }) {
+  const discountPercent = item.discountPercent;
+
   return (
     <div className="group overflow-hidden rounded-2xl border bg-card transition hover:-translate-y-1 hover:shadow-lg">
       <Link
@@ -10,7 +12,12 @@ export function ListingCard({ item }: { item: Listing; onOrder: (l: Listing) => 
         aria-label={`পণ্যের বিস্তারিত দেখুন: ${item.title}`}
         className="block"
       >
-        <div className="aspect-square w-full overflow-hidden bg-emerald-50 dark:bg-emerald-950">
+        <div className="relative aspect-square w-full overflow-hidden bg-emerald-50 dark:bg-emerald-950">
+          {discountPercent && discountPercent > 0 ? (
+            <span className="absolute left-2 top-2 z-10 rounded-md bg-red-600 px-2 py-1 text-xs font-bold text-white shadow">
+              {discountPercent}% OFF
+            </span>
+          ) : null}
           {item.images?.[0] ? (
             <img
               src={item.images[0]}
