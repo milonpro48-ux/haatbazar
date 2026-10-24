@@ -187,7 +187,66 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="mt-10 border-t bg-card py-6 text-center text-sm text-muted-foreground">© ২০২৬ হাটবাজার · বাংলাদেশের অনলাইন কেনাবেচার বাজার<br/><nav className="mt-2 flex flex-wrap justify-center gap-3"><a href="/about" className="underline">আমাদের সম্পর্কে</a><a href="/contact" className="underline">যোগাযোগ</a><a href="/terms" className="underline">শর্তাবলি</a><a href="/privacy" className="underline">গোপনীয়তা</a><a href="/refund-policy" className="underline">রিফান্ড</a><a href="/delivery-policy" className="underline">ডেলিভারি</a></nav></footer>
+      <footer className="mt-10 border-t border-slate-200 bg-slate-100 text-slate-800">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:grid-cols-2 lg:grid-cols-4">
+          <section>
+            <h3 className="mb-3 text-base font-semibold text-emerald-800">ক্রেতা সহায়তা</h3>
+            <nav className="flex flex-col items-start gap-2 text-sm">
+              <a href="/contact" className="hover:text-orange-600">সহায়তা কেন্দ্র</a>
+              <a href="/about" className="hover:text-orange-600">কীভাবে কিনবেন</a>
+              <a href="/refund-policy" className="hover:text-orange-600">রিফান্ড ও ফেরত নীতি</a>
+              <a href="/delivery-policy" className="hover:text-orange-600">ডেলিভারি তথ্য</a>
+              <a href="/terms" className="hover:text-orange-600">শর্তাবলি</a>
+            </nav>
+          </section>
+          <section>
+            <h3 className="mb-3 text-base font-semibold text-emerald-800">হাটবাজার</h3>
+            <nav className="flex flex-col items-start gap-2 text-sm">
+              <a href="/about" className="hover:text-orange-600">আমাদের সম্পর্কে</a>
+              <a href="/contact" className="hover:text-orange-600">যোগাযোগ করুন</a>
+              <a href="/privacy" className="hover:text-orange-600">গোপনীয়তা নীতি</a>
+              <a href="/terms" className="hover:text-orange-600">ব্যবহারের শর্ত</a>
+              <a href="/#popular" className="hover:text-orange-600">জনপ্রিয় ক্যাটাগরি</a>
+            </nav>
+          </section>
+          <section>
+            <h3 className="mb-3 text-base font-semibold text-emerald-800">বিক্রেতা কর্নার</h3>
+            <nav className="flex flex-col items-start gap-2 text-sm">
+              <a href="/#products" className="hover:text-orange-600">পণ্য দেখুন</a>
+              <button type="button" onClick={() => setPosting(true)} className="hover:text-orange-600">পণ্য বিক্রির বিজ্ঞাপন দিন</button>
+              <a href="/contact" className="hover:text-orange-600">বিক্রেতার সহায়তা</a>
+            </nav>
+            <div className="mt-5 rounded-xl border border-emerald-100 bg-white p-3">
+              <p className="font-semibold text-emerald-800">হাটবাজারে কেনাকাটা করুন</p>
+              <p className="mt-1 text-xs text-slate-500">সারা বাংলাদেশের ক্রেতা ও বিক্রেতাদের জন্য অনলাইন বাজার</p>
+            </div>
+          </section>
+          <section>
+            <h3 className="mb-3 text-base font-semibold text-emerald-800">যোগাযোগ ও তথ্য</h3>
+            <p className="text-sm">প্রশ্ন বা সহায়তার জন্য যোগাযোগ পেজে যান।</p>
+            <a href="/contact" className="mt-3 inline-flex rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600">যোগাযোগ করুন</a>
+          </section>
+        </div>
+        <div className="border-t border-slate-200 bg-white">
+          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold">পেমেন্ট ও অর্ডার</p>
+              <p className="mt-1 text-sm text-slate-500">অর্ডার দেওয়ার আগে বিক্রেতার সঙ্গে পণ্যের দাম ও ডেলিভারি নিশ্চিত করুন।</p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs font-semibold">
+              <span className="rounded border bg-slate-50 px-3 py-2">সরাসরি বিক্রেতার সঙ্গে যোগাযোগ</span>
+              <span className="rounded border bg-slate-50 px-3 py-2">খুচরা ও পাইকারি</span>
+              <span className="rounded border bg-slate-50 px-3 py-2">বাংলাদেশজুড়ে</span>
+            </div>
+          </div>
+          <div className="border-t border-slate-200">
+            <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+              <span>© ২০২৬ হাটবাজার · বাংলাদেশের অনলাইন কেনাবেচার বাজার</span>
+              <nav className="flex flex-wrap gap-x-4 gap-y-2"><a href="/terms" className="hover:text-emerald-700">শর্তাবলি</a><a href="/privacy" className="hover:text-emerald-700">গোপনীয়তা</a><a href="/refund-policy" className="hover:text-emerald-700">রিফান্ড নীতি</a></nav>
+            </div>
+          </div>
+        </div>
+      </footer>
       {ordering && (
         <OrderDialog item={ordering} onClose={() => setOrdering(null)}
           onDone={(m) => { setToast(m); setTimeout(() => setToast(""), 3500); }} />
