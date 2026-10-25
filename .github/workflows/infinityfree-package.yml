@@ -47,6 +47,7 @@ jobs:
           find infinityfree -name '*.php' -print0 | xargs -0 -n1 php -l
         env:
           VITE_DEMO_MODE: "false"
+          VITE_WHATSAPP_NUMBER: "8801629152161"
       - name: Assemble upload package
         run: |
           rm -rf release/haatbazar-infinityfree
