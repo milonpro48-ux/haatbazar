@@ -12,7 +12,7 @@ export function ListingCard({ item }: { item: Listing; onOrder: (l: Listing) => 
         aria-label={`পণ্যের বিস্তারিত দেখুন: ${item.title}`}
         className="block"
       >
-        <div className="relative aspect-square w-full overflow-hidden bg-emerald-50 dark:bg-emerald-950">
+        <div className="relative h-36 w-full overflow-hidden bg-emerald-50 dark:bg-emerald-950 sm:h-40">
           {discountPercent && discountPercent > 0 ? (
             <span className="absolute left-2 top-2 z-10 rounded-md bg-amber-400 px-2 py-1 text-xs font-extrabold text-rose-950 shadow">
               {discountPercent}% OFF
@@ -26,12 +26,12 @@ export function ListingCard({ item }: { item: Listing; onOrder: (l: Listing) => 
               className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
             />
           ) : (
-            <div className="grid h-full w-full place-items-center text-6xl">{emojiOf(item.category)}</div>
+            <div className="grid h-full w-full place-items-center text-5xl">{emojiOf(item.category)}</div>
           )}
         </div>
-        <div className="space-y-1 p-3">
-          <h3 className="line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-slate-800 dark:text-slate-100">{item.title}</h3>
-          <p className="text-base font-extrabold text-blue-700 dark:text-sky-400">
+        <div className="space-y-1 p-2.5">
+          <h3 className="line-clamp-2 min-h-9 text-sm font-semibold leading-5 text-slate-800 dark:text-slate-100">{item.title}</h3>
+          <p className="text-sm font-extrabold text-blue-700 dark:text-sky-400">
             {money(item.price)}
           </p>
         </div>
