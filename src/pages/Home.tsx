@@ -7,6 +7,7 @@ import { DISTRICT_SLUGS, productSeo } from "@/lib/seo";
 import { ListingCard } from "@/components/ListingCard";
 import { AdminAnalytics } from "@/pages/AdminAnalytics";
 import AdminPanel from "@/pages/AdminPanel";
+import MyOrders from "@/pages/MyOrders";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { PostAdDialog } from "@/components/PostAdDialog";
 import { OrderDialog } from "@/components/OrderDialog";
@@ -109,6 +110,7 @@ export default function Home() {
         (!saleType || i.saleType === saleType || i.saleType === "both"))
     : [];
 
+  if (path === "/my-orders") return <MyOrders onBack={() => setLocation("/")} />;
   if (path === "/admin") return <AdminPanel onBack={() => setLocation("/")} />;
   if (path === "/admin/analytics") return <AdminAnalytics onBack={() => setLocation("/admin")} />;
   if (showAnalytics) return <AdminAnalytics onBack={() => setShowAnalytics(false)} />;
@@ -123,6 +125,7 @@ export default function Home() {
             <a href="/api/login" className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">লগইন</a>
             <a href="/api/register" className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600">সাইন আপ</a>
             <a href="/api/account" className="hidden rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted sm:inline-flex">আমার অ্যাকাউন্ট</a>
+            <a href="/my-orders" className="hidden rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted sm:inline-flex">আমার অর্ডার</a>
             <button onClick={() => setPosting(true)} className="flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700">
               <Plus size={18} /> বিজ্ঞাপন দিন
             </button>
