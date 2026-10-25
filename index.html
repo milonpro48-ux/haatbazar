@@ -12,7 +12,7 @@
         var params = new URLSearchParams(window.location.search);
         var path = params.get("p");
         if (path) {
-          history.replaceState(null, "", base + path.replace(/^\\/+/, ""));
+          history.replaceState(null, "", base + path.replace(/^\/+/, ""));
         }
       })();
     </script>
