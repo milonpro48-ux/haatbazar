@@ -16,6 +16,11 @@ RewriteRule ^api/listings/?$ api/index.php?action=create_listing [QSA,L]
 RewriteRule ^api/listings/([^/]+)/?$ api/index.php?action=listing&id=$1 [QSA,L]
 RewriteRule ^api/orders/?$ api/index.php?action=orders [QSA,L]
 RewriteRule ^api/admin/orders/?$ api/index.php?action=admin_orders [QSA,L]
+RewriteRule ^api/admin/products/?$ api/index.php?action=admin_products [QSA,L]
+RewriteRule ^api/admin/product-update/?$ api/index.php?action=admin_product_update [QSA,L]
+RewriteRule ^api/admin/product-delete/?$ api/index.php?action=admin_product_delete [QSA,L]
+RewriteRule ^api/admin/order-status/?$ api/index.php?action=admin_order_status [QSA,L]
+RewriteRule ^api/admin/ship-order/?$ api/index.php?action=admin_ship_order [QSA,L]
 RewriteRule ^api/seller/orders/?$ api/index.php?action=seller_orders [QSA,L]
 
 # Do not serve the React app for unknown API routes.
