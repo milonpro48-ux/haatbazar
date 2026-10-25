@@ -6,6 +6,16 @@
     <meta name="description" content="বাংলাদেশের খুচরা ও পাইকারি অনলাইন মার্কেটপ্লেস। ইলেকট্রনিক্স, পোশাক, মুদি, কৃষি, যন্ত্রপাতি ও সেবা খুঁজুন।" />
     <meta name="theme-color" content="#047857" />
     <title>হাটবাজার | বাংলাদেশের খুচরা ও পাইকারি মার্কেটপ্লেস</title>
+    <script>
+      (function () {
+        var base = "/haatbazar/";
+        var params = new URLSearchParams(window.location.search);
+        var path = params.get("p");
+        if (path) {
+          history.replaceState(null, "", base + path.replace(/^\\/+/, ""));
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

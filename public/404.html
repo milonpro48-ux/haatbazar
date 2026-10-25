@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HaatBazar</title>
+</head>
+<body>
+  <script>
+    (function () {
+      var base = "/haatbazar/";
+      var path = window.location.pathname;
+      if (path.indexOf(base) === 0) path = path.slice(base.length);
+      else path = path.replace(/^\\/+/, "");
+      var destination = base + "?p=" + encodeURIComponent("/" + path + window.location.search + window.location.hash);
+      window.location.replace(destination);
+    })();
+  </script>
+  <p>Redirecting to HaatBazar…</p>
+</body>
+</html>
