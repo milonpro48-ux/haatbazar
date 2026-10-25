@@ -143,7 +143,6 @@ try {
             $st=$pdo->prepare("SELECT id,user_id,price,quantity,minOrderQuantity,saleType,status FROM listings WHERE id=? FOR UPDATE"); $st->execute([$listingId]); $l=$st->fetch();
             if(!$l || $l['status']!=='active') { $pdo->rollBack(); hb_json(['error'=>'listing_unavailable'],404); }
             if($quantity<(float)$l['minOrderQuantity'] || $quantity>(float)$l['quantity']) { $pdo->rollBack(); hb_json(['error'=>'quantity_out_of_range'],422); }
-            if($l['saleType']==='retail' && (float)$quantity < 1) { $pdo->rollBack(); hb_json(['error'=>'quantity_out_of_range'],422); }
             $id='HB'.gmdate('ymd').strtoupper(bin2hex(random_bytes(5)));
             $name=hb_str($b['buyerName']??$u['name'],100); $phone=preg_replace('/[\\s-]/','',hb_str($b['buyerPhone']??$u['phone'],30));
             $email=strtolower(hb_str($b['buyerEmail']??$u['email'],200));
@@ -181,8 +180,15 @@ try {
             $pdo->beginTransaction();
             try { $st=$pdo->prepare('SELECT status FROM orders WHERE id=? FOR UPDATE'); $st->execute([$id]); $o=$st->fetch(); if(!$o){$pdo->rollBack();hb_json(['error'=>'not_found'],404);}
                 $old=$o['status'];
-                if($old==='cancelled' && $status!=='cancelled') { $pdo->rollBack(); hb_json(['error'=>'cancelled_order_is_terminal'],422); }
-                if($status==='cancelled' && !in_array($old,['pending','confirmed','processing','cancelled'],true)) { $pdo->rollBack(); hb_json(['error'=>'order_cannot_be_cancelled'],422); }
+                $transitions = [
+                    'pending' => ['pending','confirmed','processing','cancelled'],
+                    'confirmed' => ['confirmed','processing','cancelled'],
+                    'processing' => ['processing','shipped','cancelled'],
+                    'shipped' => ['shipped','delivered'],
+                    'delivered' => ['delivered'],
+                    'cancelled' => ['cancelled'],
+                ];
+                if (!in_array($status, $transitions[$old] ?? [], true)) { $pdo->rollBack(); hb_json(['error'=>'invalid_status_transition','from'=>$old,'to'=>$status],422); }
                 if($status==='cancelled' && $old!=='cancelled') {
                     $restore=$pdo->prepare('SELECT listing_id,quantity FROM orders WHERE id=?'); $restore->execute([$id]); $line=$restore->fetch();
                     if($line) $pdo->prepare('UPDATE listings SET quantity=quantity+? WHERE id=?')->execute([(float)$line['quantity'],$line['listing_id']]);
