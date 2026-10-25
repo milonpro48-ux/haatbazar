@@ -429,6 +429,20 @@ try {
         out(['ok'=>true,'status'=>'paid','order_id'=>$tranId,'message'=>'Payment verified. You may return to the store.']);
     }
 
+    if ($action === 'admin_product_create') {
+        requirePost(); $admin=needAdmin(); $b=body(); csrf();
+        $title=cleanString($b['title']??'',120); $category=cleanString($b['category']??'',80); $subcategory=cleanString($b['subcategory']??'',100);
+        $district=cleanString($b['district']??'',100); $upazila=cleanString($b['upazila']??'',100); $unit=cleanString($b['unit']??'piece',20);
+        $price=filter_var($b['price']??null,FILTER_VALIDATE_FLOAT); $quantity=filter_var($b['quantity']??null,FILTER_VALIDATE_FLOAT);
+        $description=cleanString($b['description']??'',2000); $phone=preg_replace('/[\\s-]/','',cleanString($b['phone']??'',30));
+        $allowedCategories=['electronics','fashion','home-kitchen','grocery','agriculture','livestock-poultry-fish','machinery','vehicles','construction','beauty','books-office','services-rentals','bogra-doi-mishti'];
+        $allowedUnits=['kg','maund','ton','piece','dozen','liter','bag','hali','box','set','hour','day','month'];
+        if(strlen($title)<3 || $category==='' || !in_array($category,$allowedCategories,true) || $subcategory==='' || $district==='' || $price===false || $price<0 || $price>100000000000 || $quantity===false || $quantity<0 || $quantity>100000000 || !in_array($unit,$allowedUnits,true) || strlen($description)<10 || !preg_match('/^(?:\\+?88)?01[3-9]\\d{8}$/',$phone)) out(['error'=>'Invalid product fields; check category, district, phone, price, quantity and description'],422);
+        $id=bin2hex(random_bytes(16));
+        $st=$pdo->prepare("INSERT INTO listings(id,user_id,title,category,subcategory,district,upazila,price,unit,quantity,negotiable,sellerName,businessName,description,images,phone,saleType,minOrderQuantity,deliveryAvailable,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,'active')");
+        $st->execute([$id,(int)$admin['id'],$title,$category,$subcategory,$district,$upazila,(float)$price,$unit,(float)$quantity,!empty($b['negotiable'])?1:0,cleanString($b['sellerName']??$admin['name']??'HaatBazar Admin',120),cleanString($b['businessName']??'',180),$description,'[]',$phone,in_array(($b['saleType']??'both'),['retail','wholesale','both'],true)?$b['saleType']:'both',!empty($b['deliveryAvailable'])?1:0]);
+        out(['ok'=>true,'id'=>$id,'title'=>$title,'price'=>(float)$price,'quantity'=>(float)$quantity,'status'=>'active'],201);
+    }
     if ($action === 'admin_products' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         needAdmin();
         $page = max(1, min(10000, (int)($_GET['page'] ?? 1)));
