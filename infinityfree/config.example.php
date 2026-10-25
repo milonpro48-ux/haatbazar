@@ -11,5 +11,9 @@ return [
     'enable_online_payments' => false, // Keep false until sandbox end-to-end tests pass.
     'sslcommerz_sandbox' => true,
     'sslcommerz_store_id' => 'YOUR_SANDBOX_STORE_ID',
-    'sslcommerz_store_password' => 'YOUR_SANDBOX_STORE_PASSWORD'
+    'sslcommerz_store_password' => 'YOUR_SANDBOX_STORE_PASSWORD',
+    // Optional: obtain these privately from your Steadfast merchant account.
+    'steadfast_api_key' => '',
+    'steadfast_secret_key' => '',
+    'steadfast_base_url' => 'https://portal.packzy.com/api/v1'
 ];
