@@ -16,16 +16,23 @@ export const LOGIN_URL = `${BASE}/login?returnTo=/`;
 const mk = (id: number, title: string, category: string, district: string, price: number, unit: string, sellerName: string, phone: string): Listing =>
   ({ id: String(id), title, category, district, price, unit, quantity: 10, negotiable: true, sellerName, description: "নমুনা বিজ্ঞাপন", images: [], phone });
 
-const SAMPLE_IMAGES = [
-  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1517663400263-0251440c45dc?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=900&q=80",
-];
+// Demo images are assigned only where the subject is a reasonable match.
+// Categories without a suitable mapping keep the UI's no-image placeholder.
+const SAMPLE_IMAGE_BY_CATEGORY: Partial<Record<string, string>> = {
+  electronics: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80",
+  fashion: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80",
+  "home-kitchen": "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=900&q=80",
+  grocery: "https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=900&q=80",
+  agriculture: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=80",
+  "livestock-poultry-fish": "https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&w=900&q=80",
+  machinery: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=900&q=80",
+  vehicles: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=900&q=80",
+  construction: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=900&q=80",
+  beauty: "https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=900&q=80",
+  "books-office": "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=900&q=80",
+  "services-rentals": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80",
+  "bogra-doi-mishti": "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=900&q=80",
+};
 const SAMPLE: Listing[] = CATEGORIES.flatMap((category, categoryIndex) =>
   category.subcategories.slice(0, 5).map((subcategory, productIndex) => {
     const saleTypes: NonNullable<Listing["saleType"]>[] = ["retail", "wholesale", "both", "retail", "wholesale"];
@@ -39,7 +46,7 @@ const SAMPLE: Listing[] = CATEGORIES.flatMap((category, categoryIndex) =>
       sellerName: "হাটবাজার নমুনা বিক্রেতা " + (categoryIndex + 1),
       businessName: category.label + " নমুনা দোকান",
       description: subcategory + " বিভাগের প্রদর্শনী নমুনা পণ্য। অর্ডারের আগে পণ্যের মান, মজুদ, প্রতি এককের দাম ও ডেলিভারির শর্ত বিক্রেতার সঙ্গে নিশ্চিত করুন।",
-      images: [SAMPLE_IMAGES[(categoryIndex * 3 + productIndex) % SAMPLE_IMAGES.length]],
+      images: SAMPLE_IMAGE_BY_CATEGORY[category.key] ? [SAMPLE_IMAGE_BY_CATEGORY[category.key]!] : [],
       saleType: saleTypes[productIndex], minOrderQuantity: productIndex === 1 || productIndex === 4 ? 5 : 1,
       deliveryAvailable: true,
     };
