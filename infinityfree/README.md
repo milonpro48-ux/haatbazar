@@ -3,7 +3,7 @@
 This folder is a separate hosting adapter so the existing Node.js app remains untouched while the InfinityFree-compatible backend is built.
 
 ## Included
-- api/index.php: initial JSON API for product listing, registration/login/logout, COD checkout, admin order listing/status changes, and SSLCOMMERZ session/callback validation.
+- api/index.php: PHP/MySQL API for product listing/detail, seller product creation, buyer order creation, seller/admin order listing, registration/login/logout, COD checkout, admin order status changes, and SSLCOMMERZ callback validation.
 - config.example.php: private server configuration template.
 - database/schema.sql: MySQL schema for users, listings, orders, and payment transactions.
 
@@ -20,7 +20,8 @@ This folder is a separate hosting adapter so the existing Node.js app remains un
 ## Important current limitations
 - This is an API foundation, not yet a complete production deployment. The React frontend still needs to be wired to these API routes.
 - The current order schema supports one product line per order record. COD can create one order record per cart line; online checkout currently requires one line at a time.
-- Product creation/editing, image upload, password reset, CSRF token retrieval integration in the frontend, throttling, account verification, and a full admin UI still need to be completed and tested.
+- Seller product creation and buyer order creation use the same MySQL tables as the homepage and admin/seller order endpoints. The frontend sends the PHP session CSRF token on these mutations. The PHP API syntax is checked in CI, but live MySQL end-to-end testing still requires a configured staging database.
+- Product image upload/editing, password reset, throttling, account verification, and a full admin UI still need to be completed and tested. For now, create listings without uploaded images on InfinityFree.
 - Never put SSLCOMMERZ credentials in JavaScript or expose them in GitHub.
 
 SSLCOMMERZ official flow requires a server-created payment session and server-side validation of the transaction/IPN before treating it as paid: https://developer.sslcommerz.com/doc/v4/index.html

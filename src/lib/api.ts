@@ -99,6 +99,18 @@ export async function revealPhone(l: Listing): Promise<{ phone?: string; error?:
 }
 
 
+async function mutationHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  try {
+    const res = await fetch(`${BASE}/csrf`, { credentials: "include" });
+    if (res.ok) {
+      const data = await res.json();
+      if (typeof data.csrf === "string" && data.csrf) headers["X-CSRF-Token"] = data.csrf;
+    }
+  } catch {}
+  return headers;
+}
+
 export async function uploadListingImages(files: File[]): Promise<string[] | null> {
   if (files.length > 5 || files.some(f => f.size > 5 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(f.type))) return null;
   const urls: string[] = [];
@@ -124,7 +136,7 @@ export async function createListing(body: ListingInput): Promise<"ok" | "login" 
   try {
     const res = await fetch(`${BASE}/listings`, {
       method: "POST", credentials: "include",
-      headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      headers: await mutationHeaders(), body: JSON.stringify(body),
     });
     if (res.status === 401) return "login";
     if (res.status === 403) return "seller";
@@ -142,7 +154,7 @@ export async function createOrder(body: OrderInput): Promise<{status:"ok"; id:st
   try {
     const res = await fetch(`${BASE}/orders`, {
       method: "POST", credentials: "include",
-      headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      headers: await mutationHeaders(), body: JSON.stringify(body),
     });
     if (res.status === 401) return {status:"login"};
     if (res.ok) { const data = await res.json(); return {status:"ok", id:String(data.id)}; }
