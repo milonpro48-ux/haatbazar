@@ -1,0 +1,9 @@
+Options -Indexes
+<FilesMatch "^(config\.local\.php|config\.example\.php|schema\.sql|bootstrap\.php)$">
+  Require all denied
+</FilesMatch>
+RewriteEngine On
+RewriteBase /api/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
