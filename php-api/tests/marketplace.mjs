@@ -39,7 +39,7 @@ function client(){
    if(data.csrfToken)csrf=data.csrfToken;
    return data;
   },
-  async init(){const d=await this.call('csrf');csrf=d.csrfToken;return d;}
+  async init(){const d=await this.call('csrf');csrf=d.csrfToken;assert.equal(d.csrf,d.csrfToken,'frontend csrf field alias must be present');return d;}
  };
 }
 const suffix=Date.now();
@@ -51,7 +51,7 @@ async function main(){
  const seller=client();await seller.init();
  const sellerReg=await seller.call('register',{method:'POST',expect:201,body:{name:'Wholesale Seller',email:`seller-${suffix}@example.test`,phone:'01712345678',password:'SellerPassword123!',role:'wholesaler'}});
  assert.equal(sellerReg.user.role,'wholesaler');
- const listing=await seller.call('create_listing',{method:'POST',expect:201,body:{title:'Test wholesale rice',category:'grocery',subcategory:'rice',district:'Bogra',price:100,unit:'kg',quantity:100,description:'Integration test wholesale product',phone:'01712345678',saleType:'wholesale',minOrderQuantity:10,businessName:'Test Wholesale Ltd'}});
+ const listing=await seller.call('listings',{method:'POST',expect:201,body:{title:'Test wholesale rice',category:'grocery',subcategory:'rice',district:'Bogra',price:100,unit:'kg',quantity:100,description:'Integration test wholesale product',phone:'01712345678',saleType:'wholesale',minOrderQuantity:10,businessName:'Test Wholesale Ltd'}});
  assert.ok(listing.id);
  const duplicate=client();await duplicate.init();
  await duplicate.call('register',{method:'POST',expect:409,body:{name:'Duplicate',email:`seller-${suffix}@example.test`,phone:'01712345678',password:'SellerPassword123!',role:'buyer'}});
@@ -66,6 +66,10 @@ async function main(){
  const buyerReg=await buyer.call('register',{method:'POST',expect:201,body:{name:'Shop Buyer',email:`buyer-${suffix}@example.test`,phone:'01812345678',password:'BuyerPassword123!',role:'business_buyer'}});
  assert.equal(buyerReg.user.role,'business_buyer');
  const order=await buyer.call('orders',{method:'POST',expect:201,body:{listingId:listing.id,quantity:10,address:'Test shop address, Bogra'}});
+ const listingAfterOrder=await seller.call('listing',{query:{id:listing.id}});
+ assert.equal(listingAfterOrder.quantity,90,'stock must be reserved when order is created');
+ const listingByFrontendPath=await seller.call('listings/'+listing.id);
+ assert.equal(listingByFrontendPath.id,listing.id,'frontend /api/listings/:id route must resolve');
  assert.ok(order.id);
  const history=await buyer.call('my_orders');assert.ok(history.items.some(x=>x.id===order.id));
  const other=client();await other.init();
@@ -79,6 +83,9 @@ async function main(){
  const admin=client();await admin.init();await admin.call('login',{method:'POST',body:{email:`admin-${suffix}@example.test`,password:'AdminPassword123!'}});
  await admin.call('admin_order_status',{method:'POST',body:{order_id:order.id,status:'processing'}});
  await admin.call('admin_order_status',{method:'POST',expect:422,body:{order_id:order.id,status:'paid'}});
+ await admin.call('admin_order_status',{method:'POST',body:{order_id:order.id,status:'cancelled'}});
+ const listingAfterCancel=await seller.call('listing',{query:{id:listing.id}});
+ assert.equal(listingAfterCancel.quantity,100,'cancelling an order must restore reserved stock');
  const status=runPhp(`$c=require ${JSON.stringify(configPath)};$p=new PDO('mysql:host='.$c['db']['host'].';dbname='.$c['db']['name'].';charset=utf8mb4',$c['db']['user'],$c['db']['password']);$s=$p->prepare('SELECT COUNT(*) FROM order_status_history WHERE order_id=? AND new_status=?');$s->execute([${JSON.stringify(order.id)},'processing']);echo $s->fetchColumn();`);
  assert.equal(status,'1','order status change must create audit history');
  await admin.call('admin_products');
@@ -87,11 +94,13 @@ async function main(){
  console.log('PASS sellers cannot edit listings owned by another seller');
  console.log('PASS registration creates seller/buyer accounts without allowing admin self-registration');
  console.log('PASS duplicate email is rejected');
+ console.log('PASS frontend-compatible /api/listings create/detail routes and CSRF field alias');
  console.log('PASS wholesale seller listing supports minimum order quantity');
  console.log('PASS business buyer can order at wholesale minimum');
  console.log('PASS buyer order history is restricted to the current buyer');
  console.log('PASS below-minimum wholesale order is rejected');
  console.log('PASS admin endpoints reject unauthenticated and non-admin users');
+ console.log('PASS order creation reserves stock and cancellation restores it');
  console.log('PASS admin status changes are validated and audited in MySQL');
 }
 try{await main();}finally{php.kill('SIGTERM');await Promise.race([once(php,'exit'),new Promise(r=>setTimeout(r,2000))]);await rm(configPath,{force:true});}
