@@ -84,6 +84,8 @@ async function main(){
  await admin.call('admin_order_status',{method:'POST',body:{order_id:order.id,status:'processing'}});
  await admin.call('admin_order_status',{method:'POST',expect:422,body:{order_id:order.id,status:'paid'}});
  await admin.call('admin_order_status',{method:'POST',body:{order_id:order.id,status:'cancelled'}});
+ await admin.call('admin_order_status',{method:'POST',expect:422,body:{order_id:order.id,status:'processing'}});
+ await admin.call('admin_order_status',{method:'POST',expect:422,body:{order_id:order.id,status:'cancelled'}});
  const listingAfterCancel=await seller.call('listing',{query:{id:listing.id}});
  assert.equal(listingAfterCancel.quantity,100,'cancelling an order must restore reserved stock');
  const status=runPhp(`$c=require ${JSON.stringify(configPath)};$p=new PDO('mysql:host='.$c['db']['host'].';dbname='.$c['db']['name'].';charset=utf8mb4',$c['db']['user'],$c['db']['password']);$s=$p->prepare('SELECT COUNT(*) FROM order_status_history WHERE order_id=? AND new_status=?');$s->execute([${JSON.stringify(order.id)},'processing']);echo $s->fetchColumn();`);
@@ -100,7 +102,8 @@ async function main(){
  console.log('PASS buyer order history is restricted to the current buyer');
  console.log('PASS below-minimum wholesale order is rejected');
  console.log('PASS admin endpoints reject unauthenticated and non-admin users');
- console.log('PASS order creation reserves stock and cancellation restores it');
+ console.log('PASS order creation reserves stock and cancellation restores it exactly once');
+ console.log('PASS invalid order status transitions and reopening cancelled orders are rejected');
  console.log('PASS admin status changes are validated and audited in MySQL');
 }
 try{await main();}finally{php.kill('SIGTERM');await Promise.race([once(php,'exit'),new Promise(r=>setTimeout(r,2000))]);await rm(configPath,{force:true});}
