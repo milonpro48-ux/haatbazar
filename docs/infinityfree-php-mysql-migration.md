@@ -1,14 +1,16 @@
 # InfinityFree PHP/MySQL migration
 
 ## Status
-Phase 1 scaffolding only. The live backend remains Node.js/SQLite. This branch is not a drop-in replacement and must not be deployed as the live API yet.
+The PHP API now implements initial authentication, public listing search/detail, listing create/update, order creation/history, seller order views, and admin listing/order status routes. Frontend-compatible `/api/listings` and `/api/listings/:id` aliases and CSRF response field compatibility are included. Order creation reserves stock transactionally; cancellation restores stock once and invalid transitions are rejected.
+
+The live backend remains Node.js/SQLite. This branch is **not yet a complete drop-in replacement** and must not be deployed as the live API yet. CI tests run against isolated test databases only; InfinityFree staging has not been verified.
 
 ## Phases
 1. Inventory and schema: map all SQLite entities and existing `/api/...` routes to PHP/PDO/MySQL.
 2. Read-only endpoints: health, catalog, session user, public listing search/detail; compare JSON shapes with the frontend.
-3. Identity/security: login/register/logout, PHP sessions, password_hash/password_verify, CSRF protection, rate limits, OTP expiry/attempt limits.
-4. Marketplace writes: listing validation/CRUD, secure uploads, analytics and seller verification.
-5. Orders/admin: order creation, buyer-owned order history, admin-only CRUD/status/audit log; transactions and foreign keys.
+3. Identity/security: login/register/logout, PHP sessions, password_hash/password_verify and CSRF protection are implemented. Rate limiting, phone/email verification, OTP expiry/attempt limits and password reset remain incomplete.
+4. Marketplace writes: initial listing create/update and field validation are implemented. Secure upload lifecycle, analytics endpoints and seller verification workflow remain incomplete.
+5. Orders/admin: initial order creation, buyer-owned order history, seller order views, admin listing/order status operations and status audit history are implemented. Stock reservation/restoration is transactional; full admin user management and complete status/payment/shipping parity remain incomplete.
 6. Integrations: payment callback signature verification/idempotency; courier duplicate-booking lock; fail closed when credentials are absent.
 7. Parity tests and deployment: PHP lint, MySQL schema import, endpoint contract tests, staging, backup and rollback plan.
 
@@ -26,7 +28,8 @@ SQLite `users`, `listings`, `orders`, `analytics_events`, `uploaded_images`, `ma
 
 ## Acceptance gates before cutover
 - PHP lint passes; schema imports into a clean MySQL database.
-- Public API responses match current frontend expectations.
+- Public API responses match current frontend expectations, including `/api/listings`, `/api/listings/:id`, and the frontend CSRF field name.
+- Auth rate limiting, password reset/OTP, phone reveal, image upload ownership/lifecycle, seller verification, payment callbacks and courier booking have dedicated implementations and tests before cutover.
 - Unauthenticated admin writes fail; a buyer cannot read another buyer's orders.
 - SQL injection, CSRF, upload ownership, invalid listing data and session fixation tests pass.
 - Order status changes create audit rows; courier duplicate booking is blocked.
