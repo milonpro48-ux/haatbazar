@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const catalog = JSON.parse(fs.readFileSync(path.join(root, 'server/catalog.json'), 'utf8'));
 const errors = [];
-if (catalog.categories.length !== 12) errors.push(`Expected 12 categories, got ${catalog.categories.length}`);
+if (catalog.categories.length !== 13) errors.push(`Expected 13 categories, got ${catalog.categories.length}`);
 if (catalog.districts.length !== 64) errors.push(`Expected 64 districts, got ${catalog.districts.length}`);
 if (new Set(catalog.districts).size !== catalog.districts.length) errors.push('District names are not unique');
 const keys = new Set(); const slugs = new Set();
