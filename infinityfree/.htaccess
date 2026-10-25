@@ -1,7 +1,7 @@
 Options -Indexes
 DirectoryIndex index.html index.php
 
-# Send the account URLs to the PHP backend on InfinityFree.
+# Send account and admin routes to the PHP backend on InfinityFree.
 RewriteEngine On
 RewriteRule ^api/login/?$ api/index.php?action=login [QSA,L]
 RewriteRule ^api/register/?$ api/index.php?action=register [QSA,L]
@@ -10,9 +10,10 @@ RewriteRule ^api/logout/?$ api/index.php?action=logout [QSA,L]
 RewriteRule ^api/me/?$ api/index.php?action=me [QSA,L]
 RewriteRule ^api/csrf/?$ api/index.php?action=csrf [QSA,L]
 RewriteRule ^api/listings/?$ api/index.php?action=products [QSA,L]
+RewriteRule ^admin/?$ admin/index.php [QSA,L]
 
 # Keep configuration and SQL files private.
-<FilesMatch "^(config\.php|config\.example\.php|schema\.sql)$">
+<FilesMatch "^(config\.php|config\.example\.php|schema\.sql|admin-panel-migration\.sql)$">
   Require all denied
 </FilesMatch>
 <FilesMatch "^(\.env|.*\.log|.*\.sqlite|.*\.db)$">
