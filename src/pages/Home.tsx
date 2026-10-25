@@ -24,6 +24,71 @@ const why = [
 
 function slugifyBn(value: string) { return DISTRICT_SLUGS[value] || value.toLowerCase().replace(/\s+/g, "-"); }
 
+
+function AdminDemoDashboard({ onBack }: { onBack: () => void }) {
+  const [active, setActive] = useState("dashboard");
+  const [period, setPeriod] = useState("এই মাস");
+  const [vendors, setVendors] = useState([
+    { id: 1, shop: "আরন্যাক এগ্রো", category: "কৃষি ও খাদ্য", status: "Pending" },
+    { id: 2, shop: "ফ্যাশন পয়েন্ট", category: "পোশাক", status: "Pending" },
+    { id: 3, shop: "টেক জোন", category: "ইলেকট্রনিক্স", status: "Pending" },
+    { id: 4, shop: "গ্রিন ফার্ম", category: "কৃষি ও খাদ্য", status: "Pending" },
+  ]);
+  const menu = [
+    { id: "dashboard", icon: "▦", label: "ড্যাশবোর্ড" },
+    { id: "vendors", icon: "♧", label: "ভেন্ডার অনুমোদন", count: vendors.filter(v => v.status === "Pending").length },
+    { id: "users", icon: "♙", label: "গ্রাহক ও ব্যবহারকারী" },
+    { id: "orders", icon: "🛒", label: "অর্ডার ও লেনদেন" },
+    { id: "reports", icon: "⌁", label: "রিপোর্ট ও বিশ্লেষণ" },
+    { id: "settings", icon: "⚙", label: "সিস্টেম সেটিংস" },
+    { id: "help", icon: "?", label: "সাহায্য" },
+  ];
+  const orders = [
+    { id: "00047234", customer: "রাহিম উদ্দিন", amount: "৳ ২,৯০০", status: "ডেলিভারি সম্পন্ন", color: "bg-emerald-600" },
+    { id: "00047145", customer: "ফারহানা সুলতানা", amount: "৳ ১,৮৫০", status: "প্রসেসিং", color: "bg-blue-600" },
+    { id: "00047122", customer: "মোঃ আলমগীর", amount: "৳ ৪,২০০", status: "প্যাকিং চলছে", color: "bg-amber-500" },
+    { id: "00047098", customer: "সাবিনা ইয়াসমিন", amount: "৳ ১,২০০", status: "অর্ডার নিশ্চিত", color: "bg-violet-600" },
+    { id: "00047057", customer: "শফিকুল ইসলাম", amount: "৳ ৩,৭৫০", status: "বাতিল", color: "bg-rose-600" },
+  ];
+  const sectionTitle = menu.find(m => m.id === active)?.label || "ড্যাশবোর্ড";
+  return <div className="min-h-screen bg-slate-100 text-slate-900">
+    <div className="flex min-h-screen">
+      <aside className="flex w-[245px] shrink-0 flex-col bg-gradient-to-b from-emerald-950 to-slate-950 px-3 py-5 text-white max-md:w-[76px] max-md:px-2">
+        <button onClick={onBack} className="mb-8 flex items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-white/10" title="মার্কেটপ্লেসে ফিরুন"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-orange-500 text-2xl">🛍</span><span className="max-md:hidden"><b className="text-xl">Haat<span className="text-orange-400">Bazar</span></b><small className="block text-xs text-emerald-100">(হাটবাজার)</small></span></button>
+        <nav className="grid gap-2">{menu.map(item => <button key={item.id} onClick={() => setActive(item.id)} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-left transition ${active === item.id ? "bg-emerald-700 font-bold shadow" : "text-emerald-50 hover:bg-white/10"}`}><span className="w-6 text-center text-xl">{item.icon}</span><span className="flex-1 max-md:hidden">{item.label}</span>{item.count ? <span className="rounded-full bg-rose-500 px-2 py-0.5 text-xs max-md:hidden">{item.count}</span> : null}</button>)}</nav>
+        <div className="mt-auto border-t border-white/15 pt-4"><div className="flex items-center gap-3 px-2 py-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-emerald-700 text-xl">👤</span><span className="max-md:hidden"><b>Admin</b><small className="block text-emerald-200">ডেমো সুপার অ্যাডমিন</small></span></div><button onClick={onBack} className="mt-2 w-full rounded-lg px-3 py-3 text-left text-sm hover:bg-white/10">⇥ <span className="max-md:hidden">মার্কেটপ্লেসে ফিরুন</span></button></div>
+      </aside>
+      <main className="min-w-0 flex-1">
+        <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-4 py-4 backdrop-blur sm:px-7">
+          <div className="flex min-w-0 flex-1 items-center gap-3"><span className="text-xl text-slate-400">⌕</span><input aria-label="ডেমো সার্চ" placeholder="পণ্য, ক্যাটাগরি, দোকান বা অর্ডার খুঁজুন..." className="w-full max-w-xl rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-emerald-600" /></div>
+          <div className="flex items-center gap-3 text-sm"><button className="rounded-lg p-2 hover:bg-slate-100" aria-label="নোটিফিকেশন">♧</button><button className="rounded-lg p-2 hover:bg-slate-100" aria-label="বার্তা">▤</button><span className="hidden text-slate-500 sm:inline">EN / বাংলা</span><span className="rounded-full bg-emerald-100 px-3 py-2 font-bold text-emerald-900">Admin⌄</span></div>
+        </header>
+        <div className="mx-auto max-w-[1500px] p-4 sm:p-7">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-emerald-700">HAATBAZAR / ADMIN WORKSPACE</p><h1 className="mt-1 text-2xl font-extrabold sm:text-3xl">{active === "dashboard" ? "স্বাগতম, অ্যাডমিন" : sectionTitle}</h1></div><select aria-label="তারিখের পরিসর" value={period} onChange={e => setPeriod(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"><option>আজ</option><option>এই সপ্তাহ</option><option>এই মাস</option><option>এই বছর</option></select></div>
+          <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"><span className="text-lg">ⓘ</span><p><b>ডেমো প্রিভিউ:</b> নিচের পরিসংখ্যান ও অর্ডার উদাহরণমাত্র; বাস্তব বিক্রি বা সার্ভার ডেটা নয়। ভেন্ডার অনুমোদন এখানে শুধু এই স্ক্রিনে পরিবর্তিত হয়।</p></div>
+          {active === "dashboard" && <>
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[{label:"মোট বিক্রি",value:"৳ ৩,৪৫,৬০০",change:"+12.4%",icon:"৳",tone:"bg-emerald-100 text-emerald-800"},{label:"নতুন ভেন্ডার আবেদন",value:`${vendors.filter(v=>v.status==="Pending").length} জন`,change:"Pending",icon:"◷",tone:"bg-orange-100 text-orange-800"},{label:"মোট অর্ডার",value:"১,৪৫০",change:"+8.2%",icon:"♧",tone:"bg-blue-100 text-blue-800"},{label:"সক্রিয় পণ্য/ক্যাটাগরি",value:"৮,৯২০",change:"Demo",icon:"◇",tone:"bg-violet-100 text-violet-800"}].map(s=><article key={s.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex items-center justify-between gap-3"><span className="text-sm font-semibold text-slate-600">{s.label}</span><span className={`grid h-10 w-10 place-items-center rounded-xl text-lg font-bold ${s.tone}`}>{s.icon}</span></div><div className="mt-3 flex flex-wrap items-center justify-between gap-2"><strong className="text-2xl">{s.value}</strong><span className={`rounded-full px-2 py-1 text-xs font-bold ${s.tone}`}>{s.change}</span></div></article>)}
+            </section>
+            <section className="mt-4 grid gap-4 2xl:grid-cols-[1.2fr_1fr]">
+              <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"><div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-extrabold">রাজস্ব ও বিক্রয়</h2><span className="rounded-lg border px-3 py-1.5 text-xs text-slate-600">{period} ⌄</span></div><div className="h-60 w-full"><svg viewBox="0 0 650 240" role="img" aria-label="ডেমো রাজস্ব চার্ট" className="h-full w-full"><defs><linearGradient id="adminChartFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity=".35"/><stop offset="100%" stopColor="#10b981" stopOpacity=".02"/></linearGradient></defs>{[35,80,125,170,215].map(y=><g key={y}><line x1="42" x2="635" y1={y} y2={y} stroke="#e2e8f0" strokeDasharray="4 4"/><text x="32" y={y+4} textAnchor="end" fill="#64748b" fontSize="11">{(240-y)*200}</text></g>)}<path d="M45 190 C85 175 100 95 145 120 S210 165 255 135 S310 60 355 75 S405 25 445 65 S500 125 535 100 S590 40 630 28 L630 215 L45 215 Z" fill="url(#adminChartFill)"/><path d="M45 190 C85 175 100 95 145 120 S210 165 255 135 S310 60 355 75 S405 25 445 65 S500 125 535 100 S590 40 630 28" fill="none" stroke="#059669" strokeWidth="4" strokeLinecap="round"/>{["জানু","ফেব","মার্চ","এপ্রিল","মে","জুন","জুলাই","আগ","সেপ্ট","অক্টো"].map((m,i)=><text key={m} x={45+i*64} y="235" textAnchor="middle" fill="#64748b" fontSize="11">{m}</text>)}</svg></div></div>
+              <div className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b p-4"><h2 className="font-extrabold">ভেন্ডার অনুমোদন অনুরোধ</h2><button onClick={()=>setActive("vendors")} className="text-sm font-bold text-emerald-700">সব দেখুন →</button></div><div className="divide-y">{vendors.filter(v=>v.status==="Pending").slice(0,4).map(v=><div key={v.id} className="flex flex-wrap items-center justify-between gap-3 p-4"><div className="min-w-0"><p className="font-bold">{v.shop}</p><p className="text-xs text-slate-500">{v.category}</p></div><div className="flex gap-2"><button onClick={()=>setVendors(old=>old.map(x=>x.id===v.id?{...x,status:"Approved"}:x))} className="rounded-lg bg-emerald-950 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-800">অনুমোদন</button><button onClick={()=>setVendors(old=>old.map(x=>x.id===v.id?{...x,status:"Rejected"}:x))} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50">বাতিল</button></div></div>)}{vendors.every(v=>v.status!=="Pending")&&<p className="p-6 text-sm text-slate-500">কোনো pending আবেদন নেই।</p>}</div></div>
+            </section>
+            <section className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b p-4"><h2 className="font-extrabold">সাম্প্রতিক অর্ডার</h2><button onClick={()=>setActive("orders")} className="text-sm font-bold text-emerald-700">সব দেখুন →</button></div><div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-sm"><thead className="bg-slate-50 text-slate-600"><tr>{["অর্ডার আইডি","গ্রাহক","পরিমাণ","অবস্থা"].map(x=><th key={x} className="px-4 py-3 font-semibold">{x}</th>)}</tr></thead><tbody className="divide-y">{orders.map(o=><tr key={o.id}><td className="px-4 py-3 font-semibold">#{o.id}</td><td className="px-4 py-3">{o.customer}</td><td className="px-4 py-3">{o.amount}</td><td className="px-4 py-3"><span className={`rounded-full px-3 py-1 text-xs font-bold text-white ${o.color}`}>{o.status}</span></td></tr>)}</tbody></table></div></section>
+          </>}
+          {active === "vendors" && <section className="overflow-hidden rounded-2xl border bg-white shadow-sm"><div className="border-b p-4"><h2 className="font-bold">ভেন্ডার আবেদন ব্যবস্থাপনা</h2><p className="mt-1 text-sm text-slate-500">অনুমোদন/বাতিল শুধু এই ডেমো সেশনে প্রযোজ্য।</p></div><div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left text-sm"><thead className="bg-slate-50"><tr>{["দোকান","ক্যাটাগরি","স্ট্যাটাস","অ্যাকশন"].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody className="divide-y">{vendors.map(v=><tr key={v.id}><td className="px-4 py-3 font-semibold">{v.shop}</td><td className="px-4 py-3">{v.category}</td><td className="px-4 py-3">{v.status==="Pending"?"অপেক্ষমাণ":v.status==="Approved"?"অনুমোদিত":"বাতিল"}</td><td className="px-4 py-3"><div className="flex gap-2"><button onClick={()=>setVendors(old=>old.map(x=>x.id===v.id?{...x,status:"Approved"}:x))} className="rounded-lg bg-emerald-800 px-3 py-2 text-xs font-bold text-white">অনুমোদন</button><button onClick={()=>setVendors(old=>old.map(x=>x.id===v.id?{...x,status:"Rejected"}:x))} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold text-rose-700">বাতিল</button></div></td></tr>)}</tbody></table></div></section>}
+          {active === "users" && <section className="grid gap-4 md:grid-cols-3">{[{label:"মোট গ্রাহক",value:"৬,৮৪০"},{label:"নিবন্ধিত বিক্রেতা",value:"১,২৮০"},{label:"যাচাই অপেক্ষমাণ",value:"১২"}].map(x=><article key={x.label} className="rounded-2xl border bg-white p-5 shadow-sm"><p className="text-sm text-slate-500">{x.label}</p><strong className="mt-2 block text-3xl">{x.value}</strong><p className="mt-2 text-xs text-amber-700">ডেমো উদাহরণ</p></article>)}</section>}
+          {active === "orders" && <section className="overflow-x-auto rounded-2xl border bg-white shadow-sm"><table className="w-full min-w-[650px] text-left text-sm"><thead className="bg-slate-50"><tr>{["অর্ডার আইডি","গ্রাহক","পরিমাণ","অবস্থা"].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody className="divide-y">{orders.map(o=><tr key={o.id}><td className="px-4 py-3">#{o.id}</td><td className="px-4 py-3">{o.customer}</td><td className="px-4 py-3">{o.amount}</td><td className="px-4 py-3"><span className={`rounded-full px-3 py-1 text-xs font-bold text-white ${o.color}`}>{o.status}</span></td></tr>)}</tbody></table><p className="p-4 text-xs text-slate-500">এগুলো নমুনা অর্ডার; বাস্তব অর্ডার ডেটা নয়।</p></section>}
+          {active === "reports" && <section className="grid gap-4 md:grid-cols-2">{[{label:"বিক্রির প্রবণতা",desc:"সময় অনুযায়ী মোট বিক্রির নমুনা চার্ট"},{label:"ক্যাটাগরি পারফরম্যান্স",desc:"কোন ক্যাটাগরিতে বেশি ভিউ/অর্ডার হচ্ছে—এই অংশে রিপোর্ট যুক্ত করা যাবে"},{label:"বিক্রেতা ও ক্রেতা",desc:"নতুন অ্যাকাউন্ট ও সক্রিয় ব্যবহারকারীর রিপোর্ট"},{label:"কনভার্সন",desc:"পণ্য ভিউ থেকে যোগাযোগ ও অর্ডারের হার"}].map(x=><article key={x.label} className="rounded-2xl border bg-white p-5 shadow-sm"><h2 className="font-bold">{x.label}</h2><p className="mt-2 text-sm leading-6 text-slate-500">{x.desc}</p><span className="mt-4 inline-block rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">ডেমো / ডেটা সংযোগ প্রয়োজন</span></article>)}</section>}
+          {active === "settings" && <section className="rounded-2xl border bg-white p-5 shadow-sm"><h2 className="font-bold">সিস্টেম সেটিংস</h2><p className="mt-2 text-sm text-slate-600">ডেমোতে বাস্তব সাইট সেটিংস পরিবর্তন করা হয় না।</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><label className="rounded-xl border p-4 text-sm">সাইটের নাম<input readOnly value="HaatBazar (হাটবাজার)" className="mt-2 w-full rounded-lg bg-slate-50 px-3 py-2"/></label><label className="rounded-xl border p-4 text-sm">পেমেন্ট মোড<input readOnly value="বন্ধ / টেস্ট মোড" className="mt-2 w-full rounded-lg bg-slate-50 px-3 py-2"/></label></div></section>}
+          {active === "help" && <section className="rounded-2xl border bg-white p-5 shadow-sm"><h2 className="font-bold">অ্যাডমিন সহায়তা</h2><p className="mt-2 text-sm leading-6 text-slate-600">এই প্রিভিউতে মেনু ও নমুনা অ্যাকশন পরীক্ষা করতে পারবেন। বাস্তব ব্যবহারকারী, অর্ডার, পেমেন্ট বা ভেন্ডার অনুমোদনের জন্য নিরাপদ সার্ভার-সাইড অ্যাডমিন অনুমতি এবং ডেটাবেস সংযোগ প্রয়োজন।</p><button onClick={()=>setActive("dashboard")} className="mt-4 rounded-lg bg-emerald-800 px-4 py-2 font-semibold text-white">ড্যাশবোর্ডে ফিরুন</button></section>}
+          <footer className="mt-5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500"><span>🛡 HaatBazar Admin Preview · নমুনা ডেটা</span><span>বাস্তব পেমেন্ট বন্ধ · ডেমো মোড</span></footer>
+        </div>
+      </main>
+    </div>
+  </div>;
+}
+
 export default function Home() {
   const [location, setLocation] = useLocation();
   const path = location.split("?")[0];
@@ -163,6 +228,7 @@ export default function Home() {
   );
 
   if (path === "/my-orders") return <MyOrders onBack={() => setLocation("/")} />;
+  if (path === "/admin" && import.meta.env.VITE_DEMO_MODE === "true") return <AdminDemoDashboard onBack={() => setLocation("/")} />;
   if (path === "/admin") return <AdminPanel onBack={() => setLocation("/")} />;
   if (path === "/admin/analytics") return <AdminAnalytics onBack={() => setLocation("/admin")} />;
   if (showAnalytics) return <AdminAnalytics onBack={() => setShowAnalytics(false)} />;
