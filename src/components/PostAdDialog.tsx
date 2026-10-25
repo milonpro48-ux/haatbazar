@@ -55,12 +55,12 @@ export function PostAdDialog({ onClose, onDone }: { onClose: () => void; onDone:
           <input name="name" required minLength={2} placeholder="আপনার নাম" className={field} />
           <input name="phone" required inputMode="tel" pattern="^(?:\+?88)?01[3-9][0-9]{8}$" title="১১ সংখ্যার মোবাইল নম্বর, যেমন 01712345678" placeholder="01XXXXXXXXX" className={field} />
         </div>
-        <label className="block space-y-1 text-sm"><span className="font-semibold">পণ্যের বাস্তব ছবি (সর্বোচ্চ ৫টি, প্রতিটি ৪ MB-এর মধ্যে)</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => setImageFiles(Array.from(e.target.files || []).slice(0,5))} className={field} /><span className="text-xs text-muted-foreground">নিজের তোলা পরিষ্কার ছবি দিন; JPG, PNG বা WebP। ছবি দিলে ক্রেতার আস্থা বাড়ে।</span>{imageFiles.length > 0 && <span className="block text-xs text-emerald-700">{imageFiles.length}টি ছবি নির্বাচিত</span>}</label>
+        <label className="block space-y-1 text-sm"><span className="font-semibold">পণ্যের বাস্তব ছবি (সর্বোচ্চ ৫টি, প্রতিটি ২ MB-এর মধ্যে)</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => setImageFiles(Array.from(e.target.files || []).slice(0,5))} className={field} /><span className="text-xs text-muted-foreground">নিজের তোলা পরিষ্কার ছবি দিন; JPG, PNG বা WebP। ছবি দিলে ক্রেতার আস্থা বাড়ে।</span>{imageFiles.length > 0 && <span className="block text-xs text-emerald-700">{imageFiles.length}টি ছবি নির্বাচিত</span>}</label>
         <textarea name="description" required minLength={10} maxLength={2000} rows={3} placeholder="বিবরণ (কমপক্ষে ১০ অক্ষর)" className={field} />
         {msg === "login" && <p className="text-sm text-amber-600">বিজ্ঞাপন দিতে আগে <a className="underline" href={LOGIN_URL}>লগইন করুন</a>।</p>}
         {msg === "seller" && <p className="text-sm text-amber-700">আপনার অ্যাকাউন্টটি ক্রেতা হিসেবে খোলা। বিজ্ঞাপন দিতে বিক্রেতা অ্যাকাউন্ট তৈরি করুন বা বিক্রেতা অ্যাকাউন্টে লগইন করুন। <a className="underline" href="/api/register">বিক্রেতা অ্যাকাউন্ট খুলুন</a></p>}
         {msg === "invalid" && <p className="text-sm text-red-600">তথ্য ঠিক নেই অথবা সার্ভারের ক্যাটাগরি/সাবক্যাটাগরি তালিকার সঙ্গে মেলেনি। সার্ভারের validation/schema-ও আপডেট করতে হবে।</p>}
-        {msg === "images" && <p className="text-sm text-red-600">ছবি আপলোড হয়নি। JPG/PNG/WebP, সর্বোচ্চ ৪ MB করে দিন এবং লগইন/স্টোরেজ API সচল আছে কি না দেখুন।</p>}
+        {msg === "images" && <p className="text-sm text-red-600">ছবি আপলোড হয়নি। JPG/PNG/WebP, সর্বোচ্চ ২ MB করে দিন এবং লগইন/স্টোরেজ API সচল আছে কি না দেখুন।</p>}
         {msg === "error" && <p className="text-sm text-red-600">কিছু একটা ভুল হয়েছে, আবার চেষ্টা করুন।</p>}
         <button disabled={busy} className="w-full rounded-lg bg-emerald-600 py-2.5 font-semibold text-white disabled:opacity-60">
           {busy ? "পাঠানো হচ্ছে…" : "প্রকাশ করুন"}
