@@ -12,6 +12,19 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: haatbazar_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -19,8 +32,17 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
+          extensions: pdo_mysql
       - name: Check InfinityFree PHP API syntax
         run: php -l infinityfree/api/index.php
+      - name: Prepare isolated MySQL test schema
+        run: mysql -h 127.0.0.1 -uroot -proot haatbazar_test < infinityfree/database/schema.sql
+      - name: Test InfinityFree seller, buyer, and admin flow against MySQL
+        env:
+          HAATBAZAR_TEST_DB_DSN: mysql:host=127.0.0.1;port=3306;dbname=haatbazar_test;charset=utf8mb4
+          HAATBAZAR_TEST_DB_USER: root
+          HAATBAZAR_TEST_DB_PASSWORD: root
+        run: node scripts/test-infinityfree-api.mjs
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
