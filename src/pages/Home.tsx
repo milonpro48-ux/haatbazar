@@ -11,7 +11,7 @@ import MyOrders from "@/pages/MyOrders";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { PostAdDialog } from "@/components/PostAdDialog";
 import { OrderDialog } from "@/components/OrderDialog";
-import { AuthDialog, readDemoSession } from "@/components/AuthDialog";
+import { AuthDialog, readDemoSession, type DemoUser } from "@/components/AuthDialog";
 
 const whatsappNumber = (import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
 
@@ -46,7 +46,7 @@ export default function Home() {
   const [ordering, setOrdering] = useState<Listing | null>(null);
   const [toast, setToast] = useState("");
   const [showAnalytics, setShowAnalytics] = useState(false);
-  const [demoUser, setDemoUser] = useState<{ name: string; email: string } | null>(() => readDemoSession());
+  const [demoUser, setDemoUser] = useState<DemoUser | null>(() => readDemoSession());
   const [authMode, setAuthMode] = useState<"login" | "register" | null>(null);
 
   useEffect(() => { initializeAnalytics(); }, []);
@@ -114,33 +114,51 @@ export default function Home() {
         (!saleType || i.saleType === saleType || i.saleType === "both"))
     : [];
 
+  const dashboardRole = demoUser?.role || "buyer";
+  const dashboardDetails = {
+    buyer: { title: "ক্রেতা ড্যাশবোর্ড", subtitle: "আপনার কেনাকাটা, অর্ডার এবং পছন্দের পণ্য এক জায়গায়।", icon: "🛍️", actions: [{ href: "/my-orders", icon: "📦", title: "আমার অর্ডার", body: "অর্ডারের অবস্থা ও ইতিহাস দেখুন", cta: "অর্ডার দেখুন" }, { href: "/", icon: "🔎", title: "পণ্য খুঁজুন", body: "খুচরা ও পাইকারি পণ্য দেখুন", cta: "কেনাকাটা করুন" }] },
+    seller: { title: "বিক্রেতা ড্যাশবোর্ড", subtitle: "আপনার পণ্য, বিক্রির বিজ্ঞাপন ও ক্রেতাদের সঙ্গে যোগাযোগ পরিচালনা করুন।", icon: "🏪", actions: [{ href: "/", icon: "➕", title: "পণ্য / বিজ্ঞাপন দিন", body: "হোমপেজ থেকে পণ্য যোগ করার ফর্ম খুলুন", cta: "পণ্য যোগ করতে যান" }, { href: "/my-orders", icon: "📦", title: "অর্ডার দেখুন", body: "ডেমোতে অর্ডার পেজ দেখুন", cta: "অর্ডার পেজ" }] },
+    wholesaler: { title: "পাইকারি বিক্রেতা ড্যাশবোর্ড", subtitle: "পাইকারি পণ্য ও ব্যবসায়িক ক্রেতাদের জন্য আপনার বাজার পরিচালনার শুরু এখান থেকে।", icon: "📦", actions: [{ href: "/", icon: "🏷️", title: "পাইকারি পণ্য দেখুন", body: "পণ্য যোগ করতে বিক্রির ধরন পাইকারি নির্বাচন করুন", cta: "পণ্য পরিচালনা" }, { href: "/my-orders", icon: "🧾", title: "অর্ডার পেজ", body: "ডেমো অর্ডার পেজে যান", cta: "অর্ডার দেখুন" }] },
+    business: { title: "দোকান / ব্যবসায়িক ক্রেতা ড্যাশবোর্ড", subtitle: "দোকানের জন্য পণ্য খুঁজুন, পাইকারি বিকল্প দেখুন এবং অর্ডার অনুসরণ করুন।", icon: "🏬", actions: [{ href: "/", icon: "📦", title: "পাইকারি পণ্য খুঁজুন", body: "ব্যবসার জন্য উপযুক্ত পণ্য বেছে নিন", cta: "পণ্য দেখুন" }, { href: "/my-orders", icon: "🧾", title: "আমার অর্ডার", body: "আপনার অর্ডার পেজ খুলুন", cta: "অর্ডার দেখুন" }] }
+  }[dashboardRole];
+
   if (path === "/dashboard" && demoUser) return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b bg-white shadow-sm">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4">
-          <Link href="/" className="text-xl font-extrabold text-emerald-800">Haat <span className="text-orange-600">Bazar</span></Link>
-          <button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setLocation("/"); setToast("ডেমো অ্যাকাউন্ট থেকে লগআউট হয়েছে।"); }} className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-slate-100">লগআউট</button>
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4">
+          <Link href="/" className="text-xl font-extrabold tracking-tight text-white">হাট<span className="text-orange-400">বাজার</span><span className="ml-2 text-xs font-medium text-emerald-300">HaatBazar</span></Link>
+          <div className="flex items-center gap-2"><span className="hidden text-sm text-slate-300 sm:inline">{demoUser.name}</span><button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setLocation("/"); }} className="rounded-xl border border-white/15 px-3 py-2 text-sm font-semibold hover:bg-white/10">লগআউট</button></div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-8">
-        <div className="rounded-2xl bg-gradient-to-r from-emerald-800 to-emerald-600 p-6 text-white sm:p-8">
-          <p className="text-sm font-semibold text-emerald-100">আমার অ্যাকাউন্ট</p>
-          <h1 className="mt-2 text-3xl font-extrabold">স্বাগতম, {demoUser.name}!</h1>
-          <p className="mt-2 text-sm text-emerald-50">আপনার HaatBazar ড্যাশবোর্ডে স্বাগতম।</p>
-        </div>
-        <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-bold">অ্যাকাউন্টের তথ্য</h2>
-          <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-sm text-slate-500">নাম</dt><dd className="mt-1 font-semibold">{demoUser.name}</dd></div>
-            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-sm text-slate-500">ইমেইল</dt><dd className="mt-1 break-all font-semibold">{demoUser.email}</dd></div>
-          </dl>
-        </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <Link href="/my-orders" className="rounded-2xl border bg-white p-5 shadow-sm transition hover:border-emerald-600"><span className="text-2xl">📦</span><h2 className="mt-2 font-bold">আমার অর্ডার</h2><p className="mt-1 text-sm text-slate-600">অর্ডার পেজ খুলুন।</p><span className="mt-3 inline-block font-semibold text-emerald-700">অর্ডার দেখুন →</span></Link>
-          <Link href="/" className="rounded-2xl border bg-white p-5 shadow-sm transition hover:border-emerald-600"><span className="text-2xl">🛍️</span><h2 className="mt-2 font-bold">কেনাকাটা চালিয়ে যান</h2><p className="mt-1 text-sm text-slate-600">হোমপেজে ফিরে পণ্য দেখুন।</p><span className="mt-3 inline-block font-semibold text-emerald-700">পণ্য দেখুন →</span></Link>
-        </div>
-        <p className="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-900">ডেমো অ্যাকাউন্ট: এই ড্যাশবোর্ডের তথ্য এই ব্রাউজারে সংরক্ষিত। এটি এখনো সার্ভার-ভিত্তিক বাস্তব ব্যবহারকারী অ্যাকাউন্ট বা অর্ডার ডেটাবেসের সঙ্গে যুক্ত নয়।</p>
-      </main>
+      <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 lg:grid-cols-[230px_minmax(0,1fr)]">
+        <aside className="rounded-2xl border border-white/10 bg-slate-900 p-4">
+          <p className="mb-4 px-2 text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">আপনার workspace</p>
+          <div className="rounded-xl bg-emerald-500/10 p-3"><span className="text-2xl">{dashboardDetails.icon}</span><p className="mt-2 font-bold">{dashboardDetails.title}</p><p className="mt-1 text-xs text-slate-400">{demoUser.email}</p></div>
+          <nav className="mt-4 grid gap-1 text-sm">
+            <Link href="/dashboard" className="rounded-lg bg-emerald-500/15 px-3 py-3 font-semibold text-emerald-200">◈ ওভারভিউ</Link>
+            <Link href="/my-orders" className="rounded-lg px-3 py-3 text-slate-300 hover:bg-white/5">▤ আমার অর্ডার</Link>
+            <Link href="/" className="rounded-lg px-3 py-3 text-slate-300 hover:bg-white/5">⌕ মার্কেটপ্লেস</Link>
+          </nav>
+          <p className="mt-5 rounded-xl border border-amber-300/20 bg-amber-300/5 p-3 text-xs leading-5 text-amber-100">ডেমো মোড: তথ্য এই ব্রাউজারে সংরক্ষিত। বাস্তব সার্ভার ডেটার সঙ্গে যুক্ত নয়।</p>
+        </aside>
+        <main className="min-w-0">
+          <section className="overflow-hidden rounded-3xl border border-emerald-300/15 bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-900 p-6 sm:p-8">
+            <p className="text-sm font-semibold text-emerald-300">HAATBAZAR / WORKSPACE</p>
+            <h1 className="mt-3 text-2xl font-extrabold sm:text-3xl">স্বাগতম, {demoUser.name}!</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{dashboardDetails.subtitle}</p>
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-200"><span className="h-2 w-2 rounded-full bg-emerald-400"></span> {dashboardDetails.title}</div>
+          </section>
+          <section className="mt-5 grid gap-3 sm:grid-cols-3">
+            {[{ label: "অ্যাকাউন্টের ধরন", value: dashboardRole === "buyer" ? "ক্রেতা" : dashboardRole === "seller" ? "খুচরা বিক্রেতা" : dashboardRole === "wholesaler" ? "পাইকারি বিক্রেতা" : "ব্যবসায়িক ক্রেতা", icon: "👤" }, { label: "অ্যাকাউন্ট স্ট্যাটাস", value: "ডেমো সক্রিয়", icon: "✓" }, { label: "পেমেন্ট", value: "বন্ধ / পরীক্ষা মোড", icon: "🔒" }].map((stat) => <div key={stat.label} className="rounded-2xl border border-white/10 bg-slate-900 p-4"><div className="flex items-center justify-between text-sm text-slate-400"><span>{stat.label}</span><span>{stat.icon}</span></div><p className="mt-3 text-lg font-bold text-white">{stat.value}</p></div>)}
+          </section>
+          <section className="mt-7">
+            <div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-widest text-emerald-300">Quick actions</p><h2 className="mt-1 text-xl font-bold">আপনার কাজ</h2></div><Link href="/" className="text-sm font-semibold text-emerald-300 hover:text-emerald-200">মার্কেটপ্লেস →</Link></div>
+            <div className="grid gap-3 md:grid-cols-2">{dashboardDetails.actions.map((action) => <Link key={action.title} href={action.href} className="group rounded-2xl border border-white/10 bg-slate-900 p-5 transition hover:border-emerald-400/50 hover:bg-slate-900/80"><span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-400/10 text-2xl">{action.icon}</span><h3 className="mt-4 font-bold">{action.title}</h3><p className="mt-1 text-sm leading-6 text-slate-400">{action.body}</p><span className="mt-4 inline-flex text-sm font-semibold text-emerald-300">{action.cta} →</span></Link>)}</div>
+          </section>
+          <section className="mt-5 rounded-2xl border border-white/10 bg-slate-900 p-5"><h2 className="font-bold">অ্যাকাউন্টের তথ্য</h2><div className="mt-3 grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-400">নাম</p><p className="mt-1 font-semibold">{demoUser.name}</p></div><div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-400">ইমেইল</p><p className="mt-1 break-all font-semibold">{demoUser.email}</p></div></div></section>
+          <p className="mt-5 text-xs leading-5 text-slate-500">নিরাপত্তা নোট: সাধারণ রেজিস্ট্রেশন থেকে অ্যাডমিন অ্যাক্সেস দেওয়া হয় না। অ্যাডমিন প্যানেল আলাদা অনুমোদিত অ্যাকাউন্টের জন্য; এই ডেমো রোলগুলো বাস্তব অনুমতি বা সার্ভার-সাইড authorization নয়।</p>
+        </main>
+      </div>
     </div>
   );
 
