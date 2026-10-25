@@ -130,7 +130,7 @@ try {
         $phone = preg_replace('/[\\s-]/', '', cleanString($b['phone'] ?? '', 30));
         $price = filter_var($b['price'] ?? null, FILTER_VALIDATE_FLOAT);
         $quantity = filter_var($b['quantity'] ?? null, FILTER_VALIDATE_FLOAT);
-        $minimum = filter_var($b['minOrderQuantity'] ?? 1, FILTER_VALIDATE_FLOAT);
+        $minimum = 1; // HaatBazar policy: every listing can be ordered from one unit
         $saleType = cleanString($b['saleType'] ?? 'both', 20);
         $images = $b['images'] ?? [];
         $allowedCategories = ['electronics','fashion','home-kitchen','grocery','agriculture','livestock-poultry-fish','machinery','vehicles','construction','beauty','books-office','services-rentals','bogra-doi-mishti'];
@@ -160,7 +160,7 @@ try {
         if (!$item) out(['error'=>'not_found'], 404);
         $item['images'] = json_decode((string)($item['images'] ?? '[]'), true) ?: [];
         $item['price'] = (float)$item['price']; $item['quantity'] = (float)$item['quantity'];
-        $item['minOrderQuantity'] = (float)$item['minOrderQuantity'];
+        $item['minOrderQuantity'] = 1;
         $item['negotiable'] = (bool)$item['negotiable']; $item['deliveryAvailable'] = (bool)$item['deliveryAvailable'];
         $item['sellerVerified'] = false;
         out($item);
@@ -185,7 +185,7 @@ try {
             $find = $pdo->prepare("SELECT id,price,quantity,minOrderQuantity FROM listings WHERE id=? AND status='active' FOR UPDATE");
             $find->execute([$listingId]); $listing = $find->fetch();
             if (!$listing) { $pdo->rollBack(); out(['error'=>'listing_unavailable'], 404); }
-            if ($quantity < (float)$listing['minOrderQuantity']) { $pdo->rollBack(); out(['error'=>'below_minimum_order'], 422); }
+            if ($quantity < 1) { $pdo->rollBack(); out(['error'=>'below_minimum_order'], 422); }
             if ($quantity > (float)$listing['quantity']) { $pdo->rollBack(); out(['error'=>'quantity_unavailable'], 422); }
             $id = 'HB'.gmdate('ymd').strtoupper(bin2hex(random_bytes(5))).'-'.substr(hash('sha256', $listingId),0,6);
             $amount = (float)$listing['price'] * (float)$quantity;
@@ -229,7 +229,7 @@ try {
         $sql = "SELECT id,title,category,subcategory,district,upazila,price,unit,quantity,description,images,sellerName,businessName,saleType,minOrderQuantity,deliveryAvailable,created_at FROM listings WHERE $whereSql ORDER BY $orderBy LIMIT $limit OFFSET ".(($page-1)*$limit);
         $st = $pdo->prepare($sql); $st->execute($params);
         $items = $st->fetchAll();
-        foreach ($items as &$item) { $item['images'] = json_decode((string)($item['images'] ?? '[]'), true) ?: []; $item['price'] = (float)$item['price']; $item['quantity'] = (float)$item['quantity']; $item['minOrderQuantity'] = (float)$item['minOrderQuantity']; $item['negotiable'] = (bool)$item['negotiable']; $item['deliveryAvailable'] = (bool)$item['deliveryAvailable']; $item['sellerVerified'] = false; }
+        foreach ($items as &$item) { $item['images'] = json_decode((string)($item['images'] ?? '[]'), true) ?: []; $item['price'] = (float)$item['price']; $item['quantity'] = (float)$item['quantity']; $item['minOrderQuantity'] = 1; $item['negotiable'] = (bool)$item['negotiable']; $item['deliveryAvailable'] = (bool)$item['deliveryAvailable']; $item['sellerVerified'] = false; }
         unset($item);
         out(['products'=>$items,'items'=>$items,'total'=>$total,'page'=>$page,'limit'=>$limit]);
     }
