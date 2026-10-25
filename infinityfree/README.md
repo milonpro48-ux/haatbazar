@@ -23,7 +23,9 @@ The GitHub Actions workflow **Package HaatBazar for InfinityFree** builds the fr
 - The package does not include your hosting account's database credentials, seeded admin user, real payment credentials, or any provider secrets.
 - Live MySQL/InfinityFree end-to-end testing is still required after upload.
 - Product image upload and image-list editing endpoints are included, with MIME/size checks and randomized filenames; test them on the target host and confirm uploaded files cannot execute. Full product-field editing, password reset, OTP, and real courier API integration remain incomplete.
-- Admin orders support pagination, status filtering, shipping-status updates, and an audit log table. Import the updated `database/schema.sql` for the audit table.
+- Admin panel is available at `/admin` after logging in as an admin. It supports product title/price/stock/status edits, soft-removal, order status updates, and Steadfast booking when merchant API credentials are configured. `/admin/analytics` opens analytics. Admin APIs are role-protected and mutation requests require CSRF tokens.
+- For Steadfast, add `steadfast_api_key`, `steadfast_secret_key`, and `steadfast_base_url` to the private `config.php` copied on hosting; do not commit merchant credentials. Booking is not considered successful unless the API returns a valid response with a consignment/tracking identifier. A duplicate booking is blocked by the local shipment record. Use only an order/test workflow agreed with Steadfast before sending real parcels.
+- Admin orders support pagination, status filtering, shipping-status updates, and an audit log table. Import the updated `database/schema.sql` for the audit table; the API also creates its courier shipment table if missing.
 - The schema supports one product line per order record; online checkout currently requires one line at a time.
 - Do not enable real payments or advertise the marketplace as fully operational until the test checklist passes.
 
