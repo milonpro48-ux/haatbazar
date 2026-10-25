@@ -82,6 +82,37 @@ try {
     $pdo = db($config);
     if ($action === 'csrf') out(['csrf' => $_SESSION['csrf']]);
 
+    if ($action === 'upload_product_image' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        requirePost(); $u = needUser();
+        if (!in_array(($u['role'] ?? ''), ['seller','admin'], true)) out(['error'=>'Seller account required'], 403);
+        csrf();
+        if (!isset($_FILES['image']) || !is_array($_FILES['image'])) out(['error'=>'Image file is required'], 422);
+        $file = $_FILES['image'];
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) out(['error'=>'Image upload failed'], 422);
+        if ((int)($file['size'] ?? 0) < 1 || (int)$file['size'] > 4 * 1024 * 1024 || !is_uploaded_file($file['tmp_name'])) out(['error'=>'Image must be smaller than 4 MB'], 422);
+        $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+        $extensions = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'];
+        if (!isset($extensions[$mime]) || @getimagesize($file['tmp_name']) === false) out(['error'=>'Only valid JPG, PNG or WebP images are accepted'], 422);
+        $folder = dirname(__DIR__) . '/uploads/products';
+        if (!is_dir($folder) && !mkdir($folder, 0755, true) && !is_dir($folder)) out(['error'=>'Image storage is unavailable'], 503);
+        $name = bin2hex(random_bytes(20)) . '.' . $extensions[$mime];
+        if (!move_uploaded_file($file['tmp_name'], $folder . '/' . $name)) out(['error'=>'Could not store image'], 503);
+        out(['url'=>'/uploads/products/' . $name], 201);
+    }
+
+    if ($action === 'update_listing_images' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        requirePost(); $u = needUser();
+        if (!in_array(($u['role'] ?? ''), ['seller','admin'], true)) out(['error'=>'Seller account required'], 403);
+        $b = body(); csrf(); $id = cleanString($b['id'] ?? '', 80); $images = $b['images'] ?? null;
+        if ($id === '' || !is_array($images) || count($images) > 5) out(['error'=>'Invalid listing images'], 422);
+        foreach ($images as $image) if (!is_string($image) || !preg_match('~^/uploads/products/[a-f0-9]{40}\\.(?:jpg|png|webp)$~', $image)) out(['error'=>'Invalid image URL'], 422);
+        $find = $pdo->prepare('SELECT user_id FROM listings WHERE id=? LIMIT 1'); $find->execute([$id]); $owner = $find->fetch();
+        if (!$owner) out(['error'=>'Listing not found'], 404);
+        if (($u['role'] ?? '') !== 'admin' && (int)$owner['user_id'] !== (int)$u['id']) out(['error'=>'You cannot edit this listing'], 403);
+        $pdo->prepare('UPDATE listings SET images=? WHERE id=?')->execute([json_encode(array_values($images), JSON_UNESCAPED_SLASHES), $id]);
+        out(['ok'=>true,'id'=>$id,'images'=>array_values($images)]);
+    }
+
     if ($action === 'create_listing' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         requirePost();
         $u = needUser();
@@ -112,7 +143,7 @@ try {
             out(['error'=>'Invalid listing details'], 422);
         }
         foreach ($images as $image) {
-            if (!is_string($image) || strlen($image) > 500 || !preg_match('~^/api/storage/public-objects/[a-f0-9-]+\\.(?:jpg|png|webp)$~', $image)) {
+            if (!is_string($image) || strlen($image) > 500 || !preg_match('~^/uploads/products/[a-f0-9]{40}\\.(?:jpg|png|webp)$~', $image)) {
                 out(['error'=>'Product images are not yet supported by this hosting adapter; submit without images for now'], 422);
             }
         }
@@ -288,6 +319,7 @@ try {
         $method = cleanString($b['payment_method'] ?? 'cod', 20);
         if (!is_array($items) || count($items) < 1 || count($items) > 30) out(['error'=>'Cart is empty or too large'], 422);
         if (!in_array($method, ['cod','sslcommerz'], true)) out(['error'=>'Unsupported payment method'], 422);
+        if ($method === 'sslcommerz' && (empty($config['enable_online_payments']) || empty($config['sslcommerz_sandbox']))) out(['error'=>'Online payments are disabled until sandbox end-to-end tests are approved'], 503);
         $name = cleanString($b['buyer_name'] ?? $u['name'], 100);
         $phone = cleanString($b['buyer_phone'] ?? '', 30);
         $email = cleanString($b['buyer_email'] ?? $u['email'], 190);
@@ -368,18 +400,30 @@ try {
     }
 
     if ($action === 'admin_orders' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-        needAdmin();
-        $st = $pdo->query('SELECT o.*,l.title listingTitle FROM orders o JOIN listings l ON l.id=o.listing_id ORDER BY o.created_at DESC LIMIT 300');
-        $items = $st->fetchAll();
-        out(['orders'=>$items,'items'=>$items]);
+        needAdmin(); $page = max(1, min(10000, (int)($_GET['page'] ?? 1))); $limit = max(1, min(100, (int)($_GET['limit'] ?? 50)));
+        $status = cleanString($_GET['status'] ?? '', 30); $where = ''; $params = [];
+        if ($status !== '') { if (!in_array($status, ['pending','confirmed','processing','shipped','delivered','cancelled'], true)) out(['error'=>'Invalid status filter'], 422); $where = ' WHERE o.status=?'; $params[] = $status; }
+        $count = $pdo->prepare('SELECT COUNT(*) FROM orders o'.$where); $count->execute($params); $total = (int)$count->fetchColumn();
+        $st = $pdo->prepare('SELECT o.*,l.title listingTitle FROM orders o JOIN listings l ON l.id=o.listing_id'.$where.' ORDER BY o.created_at DESC LIMIT '.$limit.' OFFSET '.(($page-1)*$limit));
+        $st->execute($params); $items = $st->fetchAll(); out(['orders'=>$items,'items'=>$items,'total'=>$total,'page'=>$page,'limit'=>$limit]);
     }
     if ($action === 'admin_order_status') {
-        requirePost(); needAdmin(); $b = body(); csrf();
-        $id = cleanString($b['order_id'] ?? '', 100); $status = cleanString($b['status'] ?? '', 30);
-        if (!in_array($status, ['pending','confirmed','processing','shipped','delivered','cancelled'], true)) out(['error'=>'Invalid order status'], 422);
-        $st = $pdo->prepare('UPDATE orders SET status=?, updated_at=CURRENT_TIMESTAMP WHERE id=?'); $st->execute([$status,$id]);
-        if (!$st->rowCount()) out(['error'=>'Order not found or unchanged'], 404);
-        out(['ok'=>true]);
+        requirePost(); $admin = needAdmin(); $b = body(); csrf(); $id = cleanString($b['order_id'] ?? '', 100);
+        $status = cleanString($b['status'] ?? '', 30); $shipping = cleanString($b['shipping_status'] ?? '', 40);
+        if ($id === '') out(['error'=>'Order ID is required'], 422);
+        if ($status !== '' && !in_array($status, ['pending','confirmed','processing','shipped','delivered','cancelled'], true)) out(['error'=>'Invalid order status'], 422);
+        if ($shipping !== '' && !in_array($shipping, ['not_requested','requested','booked','picked_up','in_transit','delivered','returned','failed','cancelled'], true)) out(['error'=>'Invalid shipping status'], 422);
+        if ($status === '' && $shipping === '') out(['error'=>'No order changes supplied'], 422);
+        $find = $pdo->prepare('SELECT status,shipping_status FROM orders WHERE id=? LIMIT 1'); $find->execute([$id]); $before = $find->fetch();
+        if (!$before) out(['error'=>'Order not found'], 404);
+        $newStatus = $status !== '' ? $status : $before['status']; $newShipping = $shipping !== '' ? $shipping : $before['shipping_status'];
+        $sets = []; $params = [];
+        if ($status !== '') { $sets[] = 'status=?'; $params[] = $status; }
+        if ($shipping !== '') { $sets[] = 'shipping_status=?'; $params[] = $shipping; }
+        $params[] = $id; $pdo->prepare('UPDATE orders SET '.implode(',',$sets).',updated_at=CURRENT_TIMESTAMP WHERE id=?')->execute($params);
+        $log = $pdo->prepare('INSERT INTO order_status_audit(order_id,admin_user_id,old_status,new_status,old_shipping_status,new_shipping_status) VALUES(?,?,?,?,?,?)');
+        $log->execute([$id,(int)$admin['id'],$before['status'],$newStatus,$before['shipping_status'],$newShipping]);
+        out(['ok'=>true,'order_id'=>$id,'status'=>$newStatus,'shipping_status'=>$newShipping]);
     }
     out(['error'=>'Unknown action'], 404);
 } catch (Throwable $e) {

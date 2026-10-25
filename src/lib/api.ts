@@ -112,20 +112,21 @@ async function mutationHeaders(): Promise<Record<string, string>> {
 }
 
 export async function uploadListingImages(files: File[]): Promise<string[] | null> {
-  if (files.length > 5 || files.some(f => f.size > 5 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(f.type))) return null;
+  if (files.length > 5 || files.some(f => f.size < 1 || f.size > 4 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(f.type))) return null;
   const urls: string[] = [];
   try {
     for (const file of files) {
-      const request = await fetch(`${BASE}/storage/uploads/request-url`, {
-        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
+      const form = new FormData();
+      form.append("image", file);
+      const headers = await mutationHeaders();
+      delete headers["Content-Type"];
+      const uploaded = await fetch(`${BASE}/?action=upload_product_image`, {
+        method: "POST", credentials: "include", headers, body: form,
       });
-      if (!request.ok) return null;
-      const signed = await request.json();
-      const uploaded = await fetch(signed.uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
       if (!uploaded.ok) return null;
-      const path = String(signed.objectPath || "").split("/").map((part: string) => encodeURIComponent(part)).join("/");
-      urls.push(`${BASE}/storage/public-objects/${path}`);
+      const result = await uploaded.json();
+      if (typeof result.url !== "string" || !/^\/uploads\/products\/[a-f0-9]{40}\.(jpg|png|webp)$/.test(result.url)) return null;
+      urls.push(result.url);
     }
     return urls;
   } catch { return null; }

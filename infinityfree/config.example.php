@@ -8,6 +8,7 @@ return [
     'db_user' => 'YOUR_DATABASE_USERNAME',
     'db_password' => 'CHANGE_THIS_DATABASE_PASSWORD',
     'public_base_url' => 'https://YOUR_DOMAIN',
+    'enable_online_payments' => false, // Keep false until sandbox end-to-end tests pass.
     'sslcommerz_sandbox' => true,
     'sslcommerz_store_id' => 'YOUR_SANDBOX_STORE_ID',
     'sslcommerz_store_password' => 'YOUR_SANDBOX_STORE_PASSWORD'

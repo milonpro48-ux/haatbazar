@@ -13,6 +13,7 @@ The GitHub Actions workflow **Package HaatBazar for InfinityFree** builds the fr
 3. Open phpMyAdmin for that database and import `database/schema.sql` from the ZIP.
 4. Copy `config.example.php` to `config.php` in the ZIP's root. Fill in the real DB details and set `public_base_url` to `https://haatbazar1.kesug.com`. Keep the real `config.php` private and never commit it to GitHub.
 5. Upload the *contents* of the ZIP's `haatbazar-infinityfree` folder into the domain's `htdocs` directory. Do not upload the parent folder as a nested directory. Keep `.htaccess` enabled.
+6. Leave `enable_online_payments` set to `false`; the API rejects online checkout until sandbox end-to-end tests are approved.
 6. Create the first admin user with a PHP `password_hash()` result stored in `users.password_hash`; never store a plaintext password.
 7. Start with test listings and cash-on-delivery. Verify login/logout, session/CSRF, listing create/read, buyer order, seller/admin permissions, and deep links.
 8. Configure SSLCommerz sandbox credentials privately and verify success/failure/cancel/IPN callbacks before considering live payment. Do not treat a browser redirect alone as proof of payment.
@@ -21,7 +22,8 @@ The GitHub Actions workflow **Package HaatBazar for InfinityFree** builds the fr
 
 - The package does not include your hosting account's database credentials, seeded admin user, real payment credentials, or any provider secrets.
 - Live MySQL/InfinityFree end-to-end testing is still required after upload.
-- Product image upload/editing, password reset, throttling, account verification, courier/SMS integrations, and a complete admin UI are not yet production-complete.
+- Product image upload and image-list editing endpoints are included, with MIME/size checks and randomized filenames; test them on the target host and confirm uploaded files cannot execute. Full product-field editing, password reset, OTP, and real courier API integration remain incomplete.
+- Admin orders support pagination, status filtering, shipping-status updates, and an audit log table. Import the updated `database/schema.sql` for the audit table.
 - The schema supports one product line per order record; online checkout currently requires one line at a time.
 - Do not enable real payments or advertise the marketplace as fully operational until the test checklist passes.
 
