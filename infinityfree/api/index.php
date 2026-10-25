@@ -82,18 +82,125 @@ try {
     $pdo = db($config);
     if ($action === 'csrf') out(['csrf' => $_SESSION['csrf']]);
 
+    if ($action === 'create_listing' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        requirePost();
+        $u = needUser();
+        if (!in_array(($u['role'] ?? ''), ['seller','admin'], true)) out(['error'=>'Seller account required'], 403);
+        $b = body();
+        $title = cleanString($b['title'] ?? '', 120);
+        $category = cleanString($b['category'] ?? '', 80);
+        $subcategory = cleanString($b['subcategory'] ?? '', 100);
+        $district = cleanString($b['district'] ?? '', 100);
+        $upazila = cleanString($b['upazila'] ?? '', 100);
+        $unit = cleanString($b['unit'] ?? 'piece', 20);
+        $sellerName = cleanString($b['sellerName'] ?? ($u['name'] ?? ''), 120);
+        $businessName = cleanString($b['businessName'] ?? '', 180);
+        $description = cleanString($b['description'] ?? '', 2000);
+        $phone = preg_replace('/[\\s-]/', '', cleanString($b['phone'] ?? '', 30));
+        $price = filter_var($b['price'] ?? null, FILTER_VALIDATE_FLOAT);
+        $quantity = filter_var($b['quantity'] ?? null, FILTER_VALIDATE_FLOAT);
+        $minimum = filter_var($b['minOrderQuantity'] ?? 1, FILTER_VALIDATE_FLOAT);
+        $saleType = cleanString($b['saleType'] ?? 'both', 20);
+        $images = $b['images'] ?? [];
+        $allowedCategories = ['electronics','fashion','home-kitchen','grocery','agriculture','livestock-poultry-fish','machinery','vehicles','construction','beauty','books-office','services-rentals','bogra-doi-mishti'];
+        $allowedUnits = ['kg','maund','ton','piece','dozen','liter','bag','hali','box','set','hour','day','month'];
+        if (strlen($title) < 3 || $category === '' || !in_array($category, $allowedCategories, true) || $subcategory === '' || $district === '' ||
+            $price === false || $price < 0 || $price > 100000000000 || $quantity === false || $quantity < 0 || $quantity > 100000000 ||
+            $minimum === false || $minimum < 1 || !in_array($unit, $allowedUnits, true) ||
+            !in_array($saleType, ['retail','wholesale','both'], true) || strlen($description) < 10 ||
+            !preg_match('/^(?:\\+?88)?01[3-9]\\d{8}$/', $phone) || !is_array($images) || count($images) > 5) {
+            out(['error'=>'Invalid listing details'], 422);
+        }
+        foreach ($images as $image) {
+            if (!is_string($image) || strlen($image) > 500 || !preg_match('~^/api/storage/public-objects/[a-f0-9-]+\\.(?:jpg|png|webp)$~', $image)) {
+                out(['error'=>'Product images are not yet supported by this hosting adapter; submit without images for now'], 422);
+            }
+        }
+        $id = bin2hex(random_bytes(16));
+        $st = $pdo->prepare('INSERT INTO listings(id,user_id,title,category,subcategory,district,upazila,price,unit,quantity,negotiable,sellerName,businessName,description,images,phone,saleType,minOrderQuantity,deliveryAvailable,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,\'active\')');
+        $st->execute([$id,(int)$u['id'],$title,$category,$subcategory,$district,$upazila,(float)$price,$unit,(float)$quantity,!empty($b['negotiable'])?1:0,$sellerName,$businessName,$description,json_encode(array_values($images), JSON_UNESCAPED_SLASHES),$phone,$saleType,(float)$minimum,!empty($b['deliveryAvailable'])?1:0]);
+        out(['id'=>$id,'title'=>$title,'category'=>$category,'subcategory'=>$subcategory,'district'=>$district,'upazila'=>$upazila,'price'=>(float)$price,'unit'=>$unit,'quantity'=>(float)$quantity,'negotiable'=>!empty($b['negotiable']),'sellerName'=>$sellerName,'businessName'=>$businessName,'description'=>$description,'images'=>array_values($images),'saleType'=>$saleType,'minOrderQuantity'=>(float)$minimum,'deliveryAvailable'=>!empty($b['deliveryAvailable']),'sellerVerified'=>false], 201);
+    }
+
+    if ($action === 'listing' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $id = cleanString($_GET['id'] ?? '', 80);
+        $st = $pdo->prepare("SELECT id,title,category,subcategory,district,upazila,price,unit,quantity,negotiable,description,images,sellerName,businessName,saleType,minOrderQuantity,deliveryAvailable,created_at FROM listings WHERE id=? AND status='active' LIMIT 1");
+        $st->execute([$id]); $item = $st->fetch();
+        if (!$item) out(['error'=>'not_found'], 404);
+        $item['images'] = json_decode((string)($item['images'] ?? '[]'), true) ?: [];
+        $item['price'] = (float)$item['price']; $item['quantity'] = (float)$item['quantity'];
+        $item['minOrderQuantity'] = (float)$item['minOrderQuantity'];
+        $item['negotiable'] = (bool)$item['negotiable']; $item['deliveryAvailable'] = (bool)$item['deliveryAvailable'];
+        $item['sellerVerified'] = false;
+        out($item);
+    }
+
+    if ($action === 'orders' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        requirePost();
+        $b = body();
+        $listingId = cleanString($b['listingId'] ?? '', 80);
+        $quantity = filter_var($b['quantity'] ?? null, FILTER_VALIDATE_FLOAT);
+        $buyerName = cleanString($b['buyerName'] ?? '', 100);
+        $buyerPhone = preg_replace('/[\\s-]/', '', cleanString($b['buyerPhone'] ?? '', 30));
+        $buyerEmail = strtolower(cleanString($b['buyerEmail'] ?? '', 190));
+        $address = cleanString($b['address'] ?? '', 500);
+        if ($listingId === '' || $quantity === false || $quantity < 1 || $buyerName === '' ||
+            !preg_match('/^(?:\\+?88)?01[3-9]\\d{8}$/', $buyerPhone) ||
+            !filter_var($buyerEmail, FILTER_VALIDATE_EMAIL) || $address === '' || strlen($address) < 5) {
+            out(['error'=>'Invalid order details'], 422);
+        }
+        $pdo->beginTransaction();
+        try {
+            $find = $pdo->prepare("SELECT id,price,quantity,minOrderQuantity FROM listings WHERE id=? AND status='active' FOR UPDATE");
+            $find->execute([$listingId]); $listing = $find->fetch();
+            if (!$listing) { $pdo->rollBack(); out(['error'=>'listing_unavailable'], 404); }
+            if ($quantity < (float)$listing['minOrderQuantity']) { $pdo->rollBack(); out(['error'=>'below_minimum_order'], 422); }
+            if ($quantity > (float)$listing['quantity']) { $pdo->rollBack(); out(['error'=>'quantity_unavailable'], 422); }
+            $id = 'HB'.gmdate('ymd').strtoupper(bin2hex(random_bytes(5))).'-'.substr(hash('sha256', $listingId),0,6);
+            $amount = (float)$listing['price'] * (float)$quantity;
+            $u = currentUser();
+            $st = $pdo->prepare("INSERT INTO orders(id,listing_id,buyer_id,quantity,buyer_name,buyer_phone,buyer_email,address,amount_bdt,status,payment_status,shipping_status) VALUES(?,?,?,?,?,?,?,?,?,'pending','unpaid','not_requested')");
+            $st->execute([$id,$listingId,$u ? (int)$u['id'] : null,(float)$quantity,$buyerName,$buyerPhone,$buyerEmail,$address,$amount]);
+            $pdo->commit();
+            out(['id'=>$id,'status'=>'pending'], 201);
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    if ($action === 'seller_orders' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $u = needUser();
+        if (!in_array(($u['role'] ?? ''), ['seller','admin'], true)) out(['error'=>'Seller account required'], 403);
+        $st = $pdo->prepare('SELECT o.*,l.title listingTitle FROM orders o JOIN listings l ON l.id=o.listing_id WHERE l.user_id=? ORDER BY o.created_at DESC LIMIT 200');
+        $st->execute([(int)$u['id']]);
+        out(['items'=>$st->fetchAll()]);
+    }
+
     if ($action === 'products' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-        $q = cleanString($_GET['q'] ?? '', 100);
+        $q = cleanString($_GET['search'] ?? ($_GET['q'] ?? ''), 100);
         $category = cleanString($_GET['category'] ?? '', 80);
-        $sql = "SELECT id,title,category,subcategory,district,price,unit,quantity,description,images,sellerName,businessName,created_at FROM listings WHERE status='active'";
-        $params = [];
-        if ($q !== '') { $sql .= " AND (title LIKE ? OR description LIKE ?)"; $params[] = "%$q%"; $params[] = "%$q%"; }
-        if ($category !== '') { $sql .= " AND category=?"; $params[] = $category; }
-        $sql .= ' ORDER BY created_at DESC LIMIT 100';
+        $subcategory = cleanString($_GET['subcategory'] ?? '', 100);
+        $district = cleanString($_GET['district'] ?? '', 100);
+        $saleType = cleanString($_GET['saleType'] ?? '', 20);
+        $page = max(1, min(10000, (int)($_GET['page'] ?? 1)));
+        $limit = max(1, min(50, (int)($_GET['limit'] ?? 20)));
+        $where = ["status='active'"]; $params = [];
+        if ($q !== '') { $where[] = '(title LIKE ? OR description LIKE ? OR businessName LIKE ? OR sellerName LIKE ?)'; $term = "%$q%"; array_push($params,$term,$term,$term,$term); }
+        if ($category !== '') { $where[] = 'category=?'; $params[] = $category; }
+        if ($subcategory !== '') { $where[] = 'subcategory=?'; $params[] = $subcategory; }
+        if ($district !== '') { $where[] = 'district=?'; $params[] = $district; }
+        if (in_array($saleType, ['retail','wholesale','both'], true)) { $where[] = '(saleType=? OR saleType=?)'; $params[] = $saleType; $params[] = 'both'; }
+        $whereSql = implode(' AND ', $where);
+        $sort = cleanString($_GET['sort'] ?? 'newest', 20);
+        $orderBy = $sort === 'price_asc' ? 'price ASC' : ($sort === 'price_desc' ? 'price DESC' : 'created_at DESC');
+        $count = $pdo->prepare("SELECT COUNT(*) FROM listings WHERE $whereSql"); $count->execute($params); $total = (int)$count->fetchColumn();
+        $sql = "SELECT id,title,category,subcategory,district,upazila,price,unit,quantity,description,images,sellerName,businessName,saleType,minOrderQuantity,deliveryAvailable,created_at FROM listings WHERE $whereSql ORDER BY $orderBy LIMIT $limit OFFSET ".(($page-1)*$limit);
         $st = $pdo->prepare($sql); $st->execute($params);
         $items = $st->fetchAll();
-        foreach ($items as &$item) $item['images'] = json_decode($item['images'] ?: '[]', true) ?: [];
-        out(['products' => $items, 'items' => $items, 'total' => count($items), 'page' => 1, 'limit' => 100]);
+        foreach ($items as &$item) { $item['images'] = json_decode((string)($item['images'] ?? '[]'), true) ?: []; $item['price'] = (float)$item['price']; $item['quantity'] = (float)$item['quantity']; $item['minOrderQuantity'] = (float)$item['minOrderQuantity']; $item['negotiable'] = (bool)$item['negotiable']; $item['deliveryAvailable'] = (bool)$item['deliveryAvailable']; $item['sellerVerified'] = false; }
+        unset($item);
+        out(['products'=>$items,'items'=>$items,'total'=>$total,'page'=>$page,'limit'=>$limit]);
     }
 
     if ($action === 'me' && $_SERVER['REQUEST_METHOD'] === 'GET') out(['user' => currentUser(), 'csrf' => $_SESSION['csrf']]);
@@ -262,8 +369,9 @@ try {
 
     if ($action === 'admin_orders' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         needAdmin();
-        $st = $pdo->query('SELECT id,listing_id,buyer_id,quantity,buyer_name,buyer_phone,buyer_email,address,status,amount_bdt,payment_status,shipping_status,created_at FROM orders ORDER BY created_at DESC LIMIT 300');
-        out(['orders'=>$st->fetchAll()]);
+        $st = $pdo->query('SELECT o.*,l.title listingTitle FROM orders o JOIN listings l ON l.id=o.listing_id ORDER BY o.created_at DESC LIMIT 300');
+        $items = $st->fetchAll();
+        out(['orders'=>$items,'items'=>$items]);
     }
     if ($action === 'admin_order_status') {
         requirePost(); needAdmin(); $b = body(); csrf();
