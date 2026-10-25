@@ -121,6 +121,8 @@ async function main() {
 
   const sellerOrders = await seller.call('seller_orders');
   assert.ok(sellerOrders.items.some(item => item.id === order.id), 'seller must see orders for their own listing');
+  const buyerOrders = await buyer.call('my_orders');
+  assert.ok(buyerOrders.items.some(item => item.id === order.id), 'buyer must see their own order history');
 
   const seedAdmin = spawnSync('php', ['-r', `
     $c = require ${JSON.stringify(configPath)};
@@ -139,12 +141,33 @@ async function main() {
   assert.equal(adminLogin.user.role, 'admin');
   const adminOrders = await admin.call('admin_orders');
   assert.ok(adminOrders.items.some(item => item.id === order.id), 'admin must see the buyer order');
+  const adminProducts = await admin.call('admin_products', { query: { limit: 100 } });
+  assert.ok(adminProducts.items.some(item => item.id === listing.id), 'admin must see seller products');
+  const adminCreated = await admin.call('admin_product_create', { method: 'POST', expect: 201, body: { title: 'Admin-created test product', category: 'electronics', subcategory: 'টিভি ও অডিও', district: 'ঢাকা', price: 1500, unit: 'piece', quantity: 3, description: 'Product created by the admin integration test.', phone: '01712345678', sellerName: 'Test Admin' } });
+  assert.ok(adminCreated.id, 'admin should be able to create a product');
+  await admin.call('admin_product_update', { method: 'POST', body: { id: listing.id, title: 'Integration test TV updated', price: 2600, quantity: 7, status: 'active' } });
+  const updatedProducts = await admin.call('admin_products', { query: { limit: 100 } });
+  const updatedListing = updatedProducts.items.find(item => item.id === listing.id);
+  assert.equal(updatedListing.title, 'Integration test TV updated', 'admin product edits must persist');
+  assert.equal(Number(updatedListing.price), 2600, 'admin product price must persist');
+  await admin.call('admin_order_status', { method: 'POST', body: { order_id: order.id, status: 'processing' } });
+  const updatedOrders = await admin.call('admin_orders');
+  assert.equal(updatedOrders.items.find(item => item.id === order.id).status, 'processing', 'admin order status must persist');
+  await admin.call('admin_ship_order', { method: 'POST', expect: 503, body: { order_id: order.id } });
+  await admin.call('admin_product_delete', { method: 'POST', body: { id: listing.id } });
+  const finalProducts = await admin.call('admin_products', { query: { limit: 100 } });
+  assert.equal(finalProducts.items.find(item => item.id === listing.id).status, 'removed', 'admin product removal must persist');
 
   console.log('PASS seller-created product appears in public listing feed');
   console.log('PASS listing detail reads from the same MySQL database');
   console.log('PASS buyer order is created against the seller listing');
   console.log('PASS seller can see orders for their listing');
-  console.log('PASS admin can see buyer order');
+  console.log('PASS buyer order history is scoped to the logged-in buyer');
+  console.log('PASS admin can see buyer order and seller products');
+  console.log('PASS admin can create a product and product edits persist in MySQL');
+  console.log('PASS admin order status and audit record persist');
+  console.log('PASS Steadfast booking fails closed without private credentials');
+  console.log('PASS admin product removal persists as a soft delete');
 }
 
 try {

@@ -80,6 +80,31 @@ $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 if ($action === '' && preg_match('~/api/listings/?$~', $requestPath) && $_SERVER['REQUEST_METHOD'] === 'GET') $action = 'products';
 try {
     $pdo = db($config);
+    $pdo->exec("CREATE TABLE IF NOT EXISTS courier_shipments (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        order_id VARCHAR(120) NOT NULL UNIQUE,
+        provider VARCHAR(40) NOT NULL DEFAULT 'steadfast',
+        consignment_id VARCHAR(100) NULL,
+        tracking_code VARCHAR(150) NULL,
+        status VARCHAR(40) NOT NULL DEFAULT 'requested',
+        response_json LONGTEXT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_courier_order FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS order_status_audit (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        order_id VARCHAR(120) NOT NULL,
+        admin_user_id BIGINT UNSIGNED NOT NULL,
+        old_status VARCHAR(40) NOT NULL,
+        new_status VARCHAR(40) NOT NULL,
+        old_shipping_status VARCHAR(40) NOT NULL,
+        new_shipping_status VARCHAR(40) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_order_audit_order(order_id,created_at),
+        CONSTRAINT fk_order_audit_order_runtime FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE,
+        CONSTRAINT fk_order_audit_admin_runtime FOREIGN KEY(admin_user_id) REFERENCES users(id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     if ($action === 'csrf') out(['csrf' => $_SESSION['csrf']]);
 
     if ($action === 'upload_product_image' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -127,7 +152,7 @@ try {
         $sellerName = cleanString($b['sellerName'] ?? ($u['name'] ?? ''), 120);
         $businessName = cleanString($b['businessName'] ?? '', 180);
         $description = cleanString($b['description'] ?? '', 2000);
-        $phone = preg_replace('/[\\s-]/', '', cleanString($b['phone'] ?? '', 30));
+        $phone = preg_replace('/[\s-]/', '', cleanString($b['phone'] ?? '', 30));
         $price = filter_var($b['price'] ?? null, FILTER_VALIDATE_FLOAT);
         $quantity = filter_var($b['quantity'] ?? null, FILTER_VALIDATE_FLOAT);
         $minimum = 1; // HaatBazar policy: every listing can be ordered from one unit
@@ -139,7 +164,7 @@ try {
             $price === false || $price < 0 || $price > 100000000000 || $quantity === false || $quantity < 0 || $quantity > 100000000 ||
             $minimum === false || $minimum < 1 || !in_array($unit, $allowedUnits, true) ||
             !in_array($saleType, ['retail','wholesale','both'], true) || strlen($description) < 10 ||
-            !preg_match('/^(?:\\+?88)?01[3-9]\\d{8}$/', $phone) || !is_array($images) || count($images) > 5) {
+            !preg_match('/^(?:\\+?88)?01[3-9]\d{8}$/', $phone) || !is_array($images) || count($images) > 5) {
             out(['error'=>'Invalid listing details'], 422);
         }
         foreach ($images as $image) {
@@ -172,11 +197,11 @@ try {
         $listingId = cleanString($b['listingId'] ?? '', 80);
         $quantity = filter_var($b['quantity'] ?? null, FILTER_VALIDATE_FLOAT);
         $buyerName = cleanString($b['buyerName'] ?? '', 100);
-        $buyerPhone = preg_replace('/[\\s-]/', '', cleanString($b['buyerPhone'] ?? '', 30));
+        $buyerPhone = preg_replace('/[\s-]/', '', cleanString($b['buyerPhone'] ?? '', 30));
         $buyerEmail = strtolower(cleanString($b['buyerEmail'] ?? '', 190));
         $address = cleanString($b['address'] ?? '', 500);
         if ($listingId === '' || $quantity === false || $quantity < 1 || $buyerName === '' ||
-            !preg_match('/^(?:\\+?88)?01[3-9]\\d{8}$/', $buyerPhone) ||
+            !preg_match('/^(?:\\+?88)?01[3-9]\d{8}$/', $buyerPhone) ||
             !filter_var($buyerEmail, FILTER_VALIDATE_EMAIL) || $address === '' || strlen($address) < 5) {
             out(['error'=>'Invalid order details'], 422);
         }
@@ -200,6 +225,11 @@ try {
         }
     }
 
+    if ($action === 'my_orders' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $u=needUser();
+        $st=$pdo->prepare('SELECT o.id,o.listing_id,l.title listingTitle,o.quantity,o.amount_bdt,o.status,o.payment_status,o.shipping_status,o.created_at,o.updated_at,cs.consignment_id,cs.tracking_code FROM orders o JOIN listings l ON l.id=o.listing_id LEFT JOIN courier_shipments cs ON cs.order_id=o.id WHERE o.buyer_id=? ORDER BY o.created_at DESC LIMIT 100');
+        $st->execute([(int)$u['id']]); out(['items'=>$st->fetchAll()]);
+    }
     if ($action === 'seller_orders' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $u = needUser();
         if (!in_array(($u['role'] ?? ''), ['seller','admin'], true)) out(['error'=>'Seller account required'], 403);
@@ -399,12 +429,61 @@ try {
         out(['ok'=>true,'status'=>'paid','order_id'=>$tranId,'message'=>'Payment verified. You may return to the store.']);
     }
 
+    if ($action === 'admin_product_create') {
+        requirePost(); $admin=needAdmin(); $b=body(); csrf();
+        $title=cleanString($b['title']??'',120); $category=cleanString($b['category']??'',80); $subcategory=cleanString($b['subcategory']??'',100);
+        $district=cleanString($b['district']??'',100); $upazila=cleanString($b['upazila']??'',100); $unit=cleanString($b['unit']??'piece',20);
+        $price=filter_var($b['price']??null,FILTER_VALIDATE_FLOAT); $quantity=filter_var($b['quantity']??null,FILTER_VALIDATE_FLOAT);
+        $description=cleanString($b['description']??'',2000); $phone=preg_replace('/[\\s-]/','',cleanString($b['phone']??'',30));
+        $allowedCategories=['electronics','fashion','home-kitchen','grocery','agriculture','livestock-poultry-fish','machinery','vehicles','construction','beauty','books-office','services-rentals','bogra-doi-mishti'];
+        $allowedUnits=['kg','maund','ton','piece','dozen','liter','bag','hali','box','set','hour','day','month'];
+        if(strlen($title)<3 || $category==='' || !in_array($category,$allowedCategories,true) || $subcategory==='' || $district==='' || $price===false || $price<0 || $price>100000000000 || $quantity===false || $quantity<0 || $quantity>100000000 || !in_array($unit,$allowedUnits,true) || strlen($description)<10 || !preg_match('/^(?:\\+?88)?01[3-9]\\d{8}$/',$phone)) out(['error'=>'Invalid product fields; check category, district, phone, price, quantity and description'],422);
+        $id=bin2hex(random_bytes(16));
+        $st=$pdo->prepare("INSERT INTO listings(id,user_id,title,category,subcategory,district,upazila,price,unit,quantity,negotiable,sellerName,businessName,description,images,phone,saleType,minOrderQuantity,deliveryAvailable,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,'active')");
+        $st->execute([$id,(int)$admin['id'],$title,$category,$subcategory,$district,$upazila,(float)$price,$unit,(float)$quantity,!empty($b['negotiable'])?1:0,cleanString($b['sellerName']??$admin['name']??'HaatBazar Admin',120),cleanString($b['businessName']??'',180),$description,'[]',$phone,in_array(($b['saleType']??'both'),['retail','wholesale','both'],true)?($b['saleType']??'both'):'both',!empty($b['deliveryAvailable'])?1:0]);
+        out(['ok'=>true,'id'=>$id,'title'=>$title,'price'=>(float)$price,'quantity'=>(float)$quantity,'status'=>'active'],201);
+    }
+    if ($action === 'admin_products' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        needAdmin();
+        $page = max(1, min(10000, (int)($_GET['page'] ?? 1)));
+        $limit = max(1, min(100, (int)($_GET['limit'] ?? 100)));
+        $status = cleanString($_GET['status'] ?? '', 20);
+        $where = ''; $params = [];
+        if ($status !== '') {
+            if (!in_array($status, ['active','paused','sold','removed'], true)) out(['error'=>'Invalid product status filter'], 422);
+            $where = ' WHERE l.status=?'; $params[] = $status;
+        }
+        $count = $pdo->prepare('SELECT COUNT(*) FROM listings l'.$where); $count->execute($params); $total = (int)$count->fetchColumn();
+        $st = $pdo->prepare('SELECT l.id,l.title,l.category,l.subcategory,l.district,l.upazila,l.price,l.unit,l.quantity,l.negotiable,l.sellerName,l.businessName,l.description,l.images,l.phone,l.saleType,l.minOrderQuantity,l.deliveryAvailable,l.status,l.created_at,l.updated_at,u.email sellerEmail FROM listings l LEFT JOIN users u ON u.id=l.user_id'.$where.' ORDER BY l.created_at DESC LIMIT '.$limit.' OFFSET '.(($page-1)*$limit));
+        $st->execute($params); $items = $st->fetchAll();
+        foreach ($items as &$item) { $item['images'] = json_decode((string)($item['images'] ?? '[]'), true) ?: []; $item['price']=(float)$item['price']; $item['quantity']=(float)$item['quantity']; $item['minOrderQuantity']=1; $item['negotiable']=(bool)$item['negotiable']; $item['deliveryAvailable']=(bool)$item['deliveryAvailable']; }
+        unset($item);
+        out(['items'=>$items,'total'=>$total,'page'=>$page,'limit'=>$limit]);
+    }
+    if ($action === 'admin_product_update') {
+        requirePost(); needAdmin(); $b=body(); csrf();
+        $id=cleanString($b['id']??'',80); $title=cleanString($b['title']??'',120);
+        $price=filter_var($b['price']??null,FILTER_VALIDATE_FLOAT); $quantity=filter_var($b['quantity']??null,FILTER_VALIDATE_FLOAT);
+        $status=cleanString($b['status']??'',20);
+        if ($id==='' || strlen($title)<3 || $price===false || $price<0 || $price>100000000000 || $quantity===false || $quantity<0 || $quantity>100000000 || !in_array($status,['active','paused','sold','removed'],true)) out(['error'=>'Invalid product update fields'],422);
+        $st=$pdo->prepare('UPDATE listings SET title=?,price=?,quantity=?,status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?');
+        $st->execute([$title,(float)$price,(float)$quantity,$status,$id]);
+        if ($st->rowCount()===0) { $find=$pdo->prepare('SELECT id FROM listings WHERE id=?'); $find->execute([$id]); if (!$find->fetch()) out(['error'=>'Product not found'],404); }
+        out(['ok'=>true,'id'=>$id,'title'=>$title,'price'=>(float)$price,'quantity'=>(float)$quantity,'status'=>$status]);
+    }
+    if ($action === 'admin_product_delete') {
+        requirePost(); needAdmin(); $b=body(); csrf(); $id=cleanString($b['id']??'',80);
+        if ($id==='') out(['error'=>'Product ID is required'],422);
+        $st=$pdo->prepare("UPDATE listings SET status='removed',updated_at=CURRENT_TIMESTAMP WHERE id=?"); $st->execute([$id]);
+        if ($st->rowCount()===0) { $find=$pdo->prepare('SELECT id,status FROM listings WHERE id=?'); $find->execute([$id]); if (!$find->fetch()) out(['error'=>'Product not found'],404); }
+        out(['ok'=>true,'id'=>$id,'status'=>'removed']);
+    }
     if ($action === 'admin_orders' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         needAdmin(); $page = max(1, min(10000, (int)($_GET['page'] ?? 1))); $limit = max(1, min(100, (int)($_GET['limit'] ?? 50)));
         $status = cleanString($_GET['status'] ?? '', 30); $where = ''; $params = [];
         if ($status !== '') { if (!in_array($status, ['pending','confirmed','processing','shipped','delivered','cancelled'], true)) out(['error'=>'Invalid status filter'], 422); $where = ' WHERE o.status=?'; $params[] = $status; }
         $count = $pdo->prepare('SELECT COUNT(*) FROM orders o'.$where); $count->execute($params); $total = (int)$count->fetchColumn();
-        $st = $pdo->prepare('SELECT o.*,l.title listingTitle FROM orders o JOIN listings l ON l.id=o.listing_id'.$where.' ORDER BY o.created_at DESC LIMIT '.$limit.' OFFSET '.(($page-1)*$limit));
+        $st = $pdo->prepare('SELECT o.*,l.title listingTitle,cs.consignment_id,cs.tracking_code FROM orders o JOIN listings l ON l.id=o.listing_id LEFT JOIN courier_shipments cs ON cs.order_id=o.id'.$where.' ORDER BY o.created_at DESC LIMIT '.$limit.' OFFSET '.(($page-1)*$limit));
         $st->execute($params); $items = $st->fetchAll(); out(['orders'=>$items,'items'=>$items,'total'=>$total,'page'=>$page,'limit'=>$limit]);
     }
     if ($action === 'admin_order_status') {
@@ -424,6 +503,43 @@ try {
         $log = $pdo->prepare('INSERT INTO order_status_audit(order_id,admin_user_id,old_status,new_status,old_shipping_status,new_shipping_status) VALUES(?,?,?,?,?,?)');
         $log->execute([$id,(int)$admin['id'],$before['status'],$newStatus,$before['shipping_status'],$newShipping]);
         out(['ok'=>true,'order_id'=>$id,'status'=>$newStatus,'shipping_status'=>$newShipping]);
+    }
+    if ($action === 'admin_ship_order') {
+        requirePost(); needAdmin(); $b=body(); csrf();
+        $id=cleanString($b['order_id']??'',100);
+        if ($id==='') out(['error'=>'Order ID is required'],422);
+        $apiKey=trim((string)($config['steadfast_api_key']??'')); $secret=trim((string)($config['steadfast_secret_key']??''));
+        $base=rtrim((string)($config['steadfast_base_url']??'https://portal.packzy.com/api/v1'),'/');
+        if ($apiKey==='' || $secret==='') out(['error'=>'Steadfast API credentials are not configured in private hosting config'],503);
+        if (!preg_match('~^https://[a-zA-Z0-9.-]+(?::[0-9]+)?(?:/[^?#]*)?$~',$base)) out(['error'=>'Invalid Steadfast API base URL'],503);
+        $st=$pdo->prepare('SELECT o.*,l.title listingTitle,cs.consignment_id,cs.tracking_code FROM orders o JOIN listings l ON l.id=o.listing_id LEFT JOIN courier_shipments cs ON cs.order_id=o.id WHERE o.id=? LIMIT 1');
+        $st->execute([$id]); $order=$st->fetch();
+        if (!$order) out(['error'=>'Order not found'],404);
+        if (($order['status']??'')==='cancelled') out(['error'=>'Cancelled orders cannot be shipped'],422);
+        $existing=$pdo->prepare('SELECT status,consignment_id,tracking_code FROM courier_shipments WHERE order_id=? LIMIT 1'); $existing->execute([$id]); $shipment=$existing->fetch();
+        if ($shipment) out(['error'=>'A courier booking attempt already exists for this order. Check the Steadfast merchant panel before retrying to avoid duplicate parcels.','consignment_id'=>$shipment['consignment_id'],'tracking_code'=>$shipment['tracking_code'],'booking_status'=>$shipment['status']],409);
+        // Reserve this order before calling the provider to block double-clicks/concurrent duplicate bookings.
+        $reserve=$pdo->prepare("INSERT INTO courier_shipments(order_id,provider,status,response_json) VALUES(?,'steadfast','requested','{}')");
+        try { $reserve->execute([$id]); } catch (PDOException $e) { out(['error'=>'A courier booking attempt already exists for this order. Check the Steadfast merchant panel before retrying.'],409); }
+        $cod=($order['payment_status']??'')==='paid' ? 0 : (float)$order['amount_bdt'];
+        $payload=['invoice'=>(string)$order['id'],'recipient_name'=>(string)$order['buyer_name'],'recipient_phone'=>(string)$order['buyer_phone'],'recipient_address'=>(string)$order['address'],'cod_amount'=>$cod,'delivery_type'=>0,'note'=>'HaatBazar order '.(string)$order['id'].' - '.(string)$order['listingTitle']];
+        $opts=['http'=>['method'=>'POST','header'=>"Content-Type: application/json\r\nApi-Key: ".$apiKey."\r\nSecret-Key: ".$secret."\r\nAccept: application/json\r\n",'content'=>json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),'timeout'=>20,'ignore_errors'=>true]];
+        $raw=@file_get_contents($base.'/create_order',false,stream_context_create($opts));
+        $response=is_string($raw)?json_decode($raw,true):null;
+        if (!is_array($response)) { $pdo->prepare("UPDATE courier_shipments SET status='unknown',response_json=? WHERE order_id=?")->execute([json_encode(['error'=>'invalid_json_or_network_timeout']),$id]); out(['error'=>'Steadfast response could not be confirmed. Check the merchant panel before retrying; the booking was not automatically repeated.'],502); }
+        $httpStatus=0; foreach (($http_response_header??[]) as $header) if (preg_match('~^HTTP/\S+\s+(\d{3})~',$header,$m)) $httpStatus=(int)$m[1];
+        $consignment=(string)($response['consignment']['consignment_id']??$response['consignment_id']??'');
+        $tracking=(string)($response['consignment']['tracking_code']??$response['tracking_code']??'');
+        $apiStatus=(int)($response['status']??0);
+        if ($httpStatus<200 || $httpStatus>=300 || ($apiStatus!==0 && $apiStatus!==200) || (!$consignment && !$tracking)) {
+            error_log('[HaatBazar Steadfast] '.json_encode(['http'=>$httpStatus,'response'=>$response],JSON_UNESCAPED_SLASHES));
+            $pdo->prepare("UPDATE courier_shipments SET status='unknown',response_json=? WHERE order_id=?")->execute([json_encode($response,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$id]);
+            out(['error'=>'Steadfast booking could not be confirmed. Check the merchant panel before retrying to avoid duplicate parcels.'],502);
+        }
+        $save=$pdo->prepare("UPDATE courier_shipments SET consignment_id=?,tracking_code=?,status='booked',response_json=? WHERE order_id=?");
+        $save->execute([$consignment?:null,$tracking?:null,json_encode($response,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$id]);
+        $pdo->prepare("UPDATE orders SET shipping_status='booked',updated_at=CURRENT_TIMESTAMP WHERE id=?")->execute([$id]);
+        out(['ok'=>true,'order_id'=>$id,'consignment_id'=>$consignment,'tracking_code'=>$tracking,'shipping_status'=>'booked']);
     }
     out(['error'=>'Unknown action'], 404);
 } catch (Throwable $e) {
