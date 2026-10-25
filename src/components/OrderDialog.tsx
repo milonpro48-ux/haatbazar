@@ -55,7 +55,7 @@ export function OrderDialog({ item, onClose, onDone }: { item: Listing; onClose:
         </div>
         <div className="rounded-lg bg-emerald-50 p-3 dark:bg-emerald-950">
           <p className="font-semibold">{item.title}</p>
-          <p className="text-sm text-muted-foreground">{money(item.price)} / {unitLabel(item.unit)} · {item.sellerName}</p>
+          <p className="text-sm text-muted-foreground">{money(item.price)} · {item.sellerName}</p>
         </div>
         <div className="space-y-3 rounded-xl border p-3">
           <div className="flex items-center justify-between gap-3">
@@ -68,8 +68,8 @@ export function OrderDialog({ item, onClose, onDone }: { item: Listing; onClose:
           </div>
           <div className="flex items-center justify-between border-t pt-3">
             <div>
-              <p className="text-sm text-muted-foreground">হিসাব: {money(item.price)} × {bn(q)} {unitLabel(item.unit)}</p>
-              <p className="text-sm text-muted-foreground">প্রতি {unitLabel(item.unit)} দাম</p>
+              <p className="text-sm text-muted-foreground">হিসাব: {money(item.price)} × {bn(q)}</p>
+              <p className="text-sm text-muted-foreground">প্রতি পণ্যের দাম</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-muted-foreground">মোট দাম (পরিমাণ অনুযায়ী)</p>
