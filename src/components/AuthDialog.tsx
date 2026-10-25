@@ -3,7 +3,6 @@ import { useState } from "react";
 type Mode = "login" | "register";
 export type DemoRole = "buyer" | "seller" | "wholesaler" | "business";
 export type DemoUser = { name: string; email: string; role: DemoRole };
-const roleLabels: Record<DemoRole, string> = { buyer: "সাধারণ ক্রেতা", seller: "খুচরা বিক্রেতা", wholesaler: "পাইকারি বিক্রেতা", business: "দোকান / ব্যবসায়িক ক্রেতা" };
 type StoredAccount = DemoUser & { passwordHash: string };
 
 const ACCOUNTS_KEY = "haatbazar_demo_accounts_v1";
