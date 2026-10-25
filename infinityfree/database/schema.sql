@@ -42,3 +42,17 @@ CREATE TABLE IF NOT EXISTS payment_transactions (
  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
  INDEX idx_payment_order(order_id), CONSTRAINT fk_payment_order FOREIGN KEY(order_id) REFERENCES orders(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS order_status_audit (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ order_id VARCHAR(120) NOT NULL,
+ admin_user_id BIGINT UNSIGNED NOT NULL,
+ old_status VARCHAR(40) NOT NULL,
+ new_status VARCHAR(40) NOT NULL,
+ old_shipping_status VARCHAR(40) NOT NULL,
+ new_shipping_status VARCHAR(40) NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ INDEX idx_order_audit_order(order_id,created_at),
+ CONSTRAINT fk_order_audit_order FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE,
+ CONSTRAINT fk_order_audit_admin FOREIGN KEY(admin_user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
