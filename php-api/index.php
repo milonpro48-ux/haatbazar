@@ -10,6 +10,7 @@ $pathAction = trim((string)preg_replace('#^/api/?#', '', $path), '/');
 if ($action === '') $action = $pathAction;
 if (str_ends_with($action, '.php')) $action = substr($action, 0, -4);
 // Keep the existing frontend route contract (/api/listings and /api/listings/:id).
+// Stock is reserved in the order transaction and only restored on a valid first cancellation.
 if ($action === 'listings') $action = ($method === 'POST') ? 'create_listing' : 'products';
 if (preg_match('#^listings/([^/]+)$#', $action, $routeMatch)) {
     $_GET['id'] = rawurldecode($routeMatch[1]);
