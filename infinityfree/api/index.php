@@ -139,7 +139,7 @@ try {
         $sellerName = cleanString($b['sellerName'] ?? ($u['name'] ?? ''), 120);
         $businessName = cleanString($b['businessName'] ?? '', 180);
         $description = cleanString($b['description'] ?? '', 2000);
-        $phone = preg_replace('/[\\s-]/', '', cleanString($b['phone'] ?? '', 30));
+        $phone = preg_replace('/[\s-]/', '', cleanString($b['phone'] ?? '', 30));
         $price = filter_var($b['price'] ?? null, FILTER_VALIDATE_FLOAT);
         $quantity = filter_var($b['quantity'] ?? null, FILTER_VALIDATE_FLOAT);
         $minimum = 1; // HaatBazar policy: every listing can be ordered from one unit
@@ -151,7 +151,7 @@ try {
             $price === false || $price < 0 || $price > 100000000000 || $quantity === false || $quantity < 0 || $quantity > 100000000 ||
             $minimum === false || $minimum < 1 || !in_array($unit, $allowedUnits, true) ||
             !in_array($saleType, ['retail','wholesale','both'], true) || strlen($description) < 10 ||
-            !preg_match('/^(?:\\+?88)?01[3-9]\\d{8}$/', $phone) || !is_array($images) || count($images) > 5) {
+            !preg_match('/^(?:\\+?88)?01[3-9]\d{8}$/', $phone) || !is_array($images) || count($images) > 5) {
             out(['error'=>'Invalid listing details'], 422);
         }
         foreach ($images as $image) {
@@ -184,11 +184,11 @@ try {
         $listingId = cleanString($b['listingId'] ?? '', 80);
         $quantity = filter_var($b['quantity'] ?? null, FILTER_VALIDATE_FLOAT);
         $buyerName = cleanString($b['buyerName'] ?? '', 100);
-        $buyerPhone = preg_replace('/[\\s-]/', '', cleanString($b['buyerPhone'] ?? '', 30));
+        $buyerPhone = preg_replace('/[\s-]/', '', cleanString($b['buyerPhone'] ?? '', 30));
         $buyerEmail = strtolower(cleanString($b['buyerEmail'] ?? '', 190));
         $address = cleanString($b['address'] ?? '', 500);
         if ($listingId === '' || $quantity === false || $quantity < 1 || $buyerName === '' ||
-            !preg_match('/^(?:\\+?88)?01[3-9]\\d{8}$/', $buyerPhone) ||
+            !preg_match('/^(?:\\+?88)?01[3-9]\d{8}$/', $buyerPhone) ||
             !filter_var($buyerEmail, FILTER_VALIDATE_EMAIL) || $address === '' || strlen($address) < 5) {
             out(['error'=>'Invalid order details'], 422);
         }
@@ -484,23 +484,28 @@ try {
         $st->execute([$id]); $order=$st->fetch();
         if (!$order) out(['error'=>'Order not found'],404);
         if (($order['status']??'')==='cancelled') out(['error'=>'Cancelled orders cannot be shipped'],422);
-        if (!empty($order['consignment_id']) || !empty($order['tracking_code'])) out(['error'=>'This order already has a courier booking','consignment_id'=>$order['consignment_id'],'tracking_code'=>$order['tracking_code']],409);
+        $existing=$pdo->prepare('SELECT status,consignment_id,tracking_code FROM courier_shipments WHERE order_id=? LIMIT 1'); $existing->execute([$id]); $shipment=$existing->fetch();
+        if ($shipment) out(['error'=>'A courier booking attempt already exists for this order. Check the Steadfast merchant panel before retrying to avoid duplicate parcels.','consignment_id'=>$shipment['consignment_id'],'tracking_code'=>$shipment['tracking_code'],'booking_status'=>$shipment['status']],409);
+        // Reserve this order before calling the provider to block double-clicks/concurrent duplicate bookings.
+        $reserve=$pdo->prepare("INSERT INTO courier_shipments(order_id,provider,status,response_json) VALUES(?,'steadfast','requested','{}')");
+        try { $reserve->execute([$id]); } catch (PDOException $e) { out(['error'=>'A courier booking attempt already exists for this order. Check the Steadfast merchant panel before retrying.'],409); }
         $cod=($order['payment_status']??'')==='paid' ? 0 : (float)$order['amount_bdt'];
         $payload=['invoice'=>(string)$order['id'],'recipient_name'=>(string)$order['buyer_name'],'recipient_phone'=>(string)$order['buyer_phone'],'recipient_address'=>(string)$order['address'],'cod_amount'=>$cod,'delivery_type'=>0,'note'=>'HaatBazar order '.(string)$order['id'].' - '.(string)$order['listingTitle']];
-        $opts=['http'=>['method'=>'POST','header'=>"Content-Type: application/json\\r\\nApi-Key: ".$apiKey."\\r\\nSecret-Key: ".$secret."\\r\\nAccept: application/json\\r\\n",'content'=>json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),'timeout'=>20,'ignore_errors'=>true]];
+        $opts=['http'=>['method'=>'POST','header'=>"Content-Type: application/json\r\nApi-Key: ".$apiKey."\r\nSecret-Key: ".$secret."\r\nAccept: application/json\r\n",'content'=>json_encode($payload,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),'timeout'=>20,'ignore_errors'=>true]];
         $raw=@file_get_contents($base.'/create_order',false,stream_context_create($opts));
         $response=is_string($raw)?json_decode($raw,true):null;
-        if (!is_array($response)) out(['error'=>'Steadfast did not return valid JSON; check hosting network and merchant API settings'],502);
-        $httpStatus=0; foreach (($http_response_header??[]) as $header) if (preg_match('~^HTTP/\\S+\\s+(\\d{3})~',$header,$m)) $httpStatus=(int)$m[1];
+        if (!is_array($response)) { $pdo->prepare("UPDATE courier_shipments SET status='unknown',response_json=? WHERE order_id=?")->execute([json_encode(['error'=>'invalid_json_or_network_timeout']),$id]); out(['error'=>'Steadfast response could not be confirmed. Check the merchant panel before retrying; the booking was not automatically repeated.'],502); }
+        $httpStatus=0; foreach (($http_response_header??[]) as $header) if (preg_match('~^HTTP/\S+\s+(\d{3})~',$header,$m)) $httpStatus=(int)$m[1];
         $consignment=(string)($response['consignment']['consignment_id']??$response['consignment_id']??'');
         $tracking=(string)($response['consignment']['tracking_code']??$response['tracking_code']??'');
         $apiStatus=(int)($response['status']??0);
         if ($httpStatus<200 || $httpStatus>=300 || ($apiStatus!==0 && $apiStatus!==200) || (!$consignment && !$tracking)) {
             error_log('[HaatBazar Steadfast] '.json_encode(['http'=>$httpStatus,'response'=>$response],JSON_UNESCAPED_SLASHES));
-            out(['error'=>'Steadfast rejected the booking or returned an unexpected response. No success was recorded.'],502);
+            $pdo->prepare("UPDATE courier_shipments SET status='unknown',response_json=? WHERE order_id=?")->execute([json_encode($response,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$id]);
+            out(['error'=>'Steadfast booking could not be confirmed. Check the merchant panel before retrying to avoid duplicate parcels.'],502);
         }
-        $save=$pdo->prepare("INSERT INTO courier_shipments(order_id,provider,consignment_id,tracking_code,status,response_json) VALUES(?,'steadfast',?,?, 'booked',?)");
-        $save->execute([$id,$consignment?:null,$tracking?:null,json_encode($response,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]);
+        $save=$pdo->prepare("UPDATE courier_shipments SET consignment_id=?,tracking_code=?,status='booked',response_json=? WHERE order_id=?");
+        $save->execute([$consignment?:null,$tracking?:null,json_encode($response,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$id]);
         $pdo->prepare("UPDATE orders SET shipping_status='booked',updated_at=CURRENT_TIMESTAMP WHERE id=?")->execute([$id]);
         out(['ok'=>true,'order_id'=>$id,'consignment_id'=>$consignment,'tracking_code'=>$tracking,'shipping_status'=>'booked']);
     }
