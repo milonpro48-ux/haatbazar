@@ -225,6 +225,11 @@ try {
         }
     }
 
+    if ($action === 'my_orders' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $u=needUser();
+        $st=$pdo->prepare('SELECT o.id,o.listing_id,l.title listingTitle,o.quantity,o.amount_bdt,o.status,o.payment_status,o.shipping_status,o.created_at,o.updated_at,cs.consignment_id,cs.tracking_code FROM orders o JOIN listings l ON l.id=o.listing_id LEFT JOIN courier_shipments cs ON cs.order_id=o.id WHERE o.buyer_id=? ORDER BY o.created_at DESC LIMIT 100');
+        $st->execute([(int)$u['id']]); out(['items'=>$st->fetchAll()]);
+    }
     if ($action === 'seller_orders' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $u = needUser();
         if (!in_array(($u['role'] ?? ''), ['seller','admin'], true)) out(['error'=>'Seller account required'], 403);
