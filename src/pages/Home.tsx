@@ -145,6 +145,7 @@ export default function Home() {
               {DISTRICTS.map((d) => <option key={d}>{d}</option>)}
             </select>
           </div>
+          </div>
           <div className="relative mx-auto mt-8 grid aspect-square w-full max-w-[360px] place-items-center lg:mt-0" aria-label="আপনার এলাকার হাট, কেনা-বেচা সহজ, সারা বাংলাদেশ">
             <div className="absolute inset-[4%] rounded-full border border-amber-300/30" />
             <div className="absolute inset-[11%] rounded-full border border-amber-300/20" />
