@@ -12,6 +12,7 @@ import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { PostAdDialog } from "@/components/PostAdDialog";
 import { OrderDialog } from "@/components/OrderDialog";
 import { AuthDialog, readDemoSession } from "@/components/AuthDialog";
+import UserDashboard from "@/pages/UserDashboard";
 
 const whatsappNumber = (import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
 
@@ -113,6 +114,9 @@ export default function Home() {
         (!saleType || i.saleType === saleType || i.saleType === "both"))
     : [];
 
+  if (path === "/dashboard") return demoUser
+    ? <UserDashboard user={demoUser} onBack={() => setLocation("/")} onLogout={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setLocation("/"); }} />
+    : <div className="min-h-screen grid place-items-center p-6"><div className="max-w-md rounded-2xl border bg-card p-6 text-center"><h1 className="text-xl font-bold">ড্যাশবোর্ড দেখতে লগইন করুন</h1><p className="mt-2 text-sm text-muted-foreground">আপনার ডেমো অ্যাকাউন্টে প্রবেশ করলে ড্যাশবোর্ড খুলবে।</p><button onClick={() => setAuthMode("login")} className="mt-4 rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white">লগইন করুন</button><button onClick={() => setLocation("/")} className="ml-2 mt-4 rounded-lg border px-4 py-2 font-semibold">হোমপেজ</button>{authMode && <AuthDialog mode={authMode} onClose={() => setAuthMode(null)} onModeChange={setAuthMode} onSuccess={(user) => { setDemoUser(user); setAuthMode(null); setLocation("/dashboard"); }} />}</div></div>;
   if (path === "/my-orders") return <MyOrders onBack={() => setLocation("/")} />;
   if (path === "/admin") return <AdminPanel onBack={() => setLocation("/")} />;
   if (path === "/admin/analytics") return <AdminAnalytics onBack={() => setLocation("/admin")} />;
@@ -128,6 +132,7 @@ export default function Home() {
             {demoUser ? (
               <>
                 <span className="hidden max-w-32 truncate text-sm font-semibold sm:inline">স্বাগতম, {demoUser.name}</span>
+                <Link href="/dashboard" className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">ড্যাশবোর্ড</Link>
                 <button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setToast("ডেমো অ্যাকাউন্ট থেকে লগআউট হয়েছে।"); }} className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">লগআউট</button>
               </>
             ) : (
@@ -290,7 +295,7 @@ export default function Home() {
           onDone={(m) => { setToast(m); setTimeout(() => setToast(""), 3500); }} />
       )}
       {toast && <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-foreground px-4 py-2 text-background">{toast}</div>}
-      {authMode && <AuthDialog mode={authMode} onClose={() => setAuthMode(null)} onModeChange={setAuthMode} onSuccess={(user) => { setDemoUser(user); setAuthMode(null); setToast("ডেমো " + (authMode === "register" ? "রেজিস্ট্রেশন" : "লগইন") + " সফল হয়েছে।"); setTimeout(() => setToast(""), 3500); }} />}
+      {authMode && <AuthDialog mode={authMode} onClose={() => setAuthMode(null)} onModeChange={setAuthMode} onSuccess={(user) => { setDemoUser(user); setAuthMode(null); setLocation("/dashboard"); setToast("ডেমো " + (authMode === "register" ? "রেজিস্ট্রেশন" : "লগইন") + " সফল হয়েছে।"); setTimeout(() => setToast(""), 3500); }} />}
       {posting && <PostAdDialog onClose={() => setPosting(false)} onDone={() => setTick((t) => t + 1)} />}
       {whatsappNumber && (
         <a
