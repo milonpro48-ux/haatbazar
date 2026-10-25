@@ -6,11 +6,16 @@ $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $path = preg_replace('#/+#', '/', $path);
 $action = trim((string)($_GET['action'] ?? ''), '/');
-if ($action === '') {
-    $action = preg_replace('#^/api/?#', '', $path);
-    $action = trim((string)$action, '/');
-}
+$pathAction = trim((string)preg_replace('#^/api/?#', '', $path), '/');
+if ($action === '') $action = $pathAction;
 if (str_ends_with($action, '.php')) $action = substr($action, 0, -4);
+// Keep the existing frontend route contract (/api/listings and /api/listings/:id).
+if ($action === 'listings') $action = ($method === 'POST') ? 'create_listing' : 'products';
+if (preg_match('#^listings/([^/]+)$#', $action, $routeMatch)) {
+    $_GET['id'] = rawurldecode($routeMatch[1]);
+    $action = 'listing';
+}
+if ($action === 'listings' && $method === 'POST') $action = 'create_listing';
 $body = null;
 function hb_input(): array {
     global $body;
@@ -65,7 +70,7 @@ try {
     if ($method==='GET' && $action==='healthz') hb_json(['status'=>'ok','service'=>'haatbazar-php','time'=>gmdate('c')]);
     if ($method==='GET' && $action==='csrf') {
         if(empty($_SESSION['csrf_token'])) $_SESSION['csrf_token']=bin2hex(random_bytes(32));
-        hb_json(['csrfToken'=>$_SESSION['csrf_token']]);
+        hb_json(['csrfToken'=>$_SESSION['csrf_token'],'csrf'=>$_SESSION['csrf_token']]);
     }
     if ($method==='GET' && $action==='me') hb_json(['user'=>hb_user()]);
     if ($action==='register' && $method==='POST') {
@@ -82,7 +87,7 @@ try {
         session_regenerate_id(true);
         $_SESSION['user']=['id'=>(int)$pdo->lastInsertId(),'name'=>$name,'email'=>$email,'phone'=>$phone,'role'=>$role];
         $_SESSION['csrf_token']=bin2hex(random_bytes(32));
-        hb_json(['user'=>$_SESSION['user'],'csrfToken'=>$_SESSION['csrf_token']],201);
+        hb_json(['user'=>$_SESSION['user'],'csrfToken'=>$_SESSION['csrf_token'],'csrf'=>$_SESSION['csrf_token']],201);
     }
     if ($action==='login' && $method==='POST') {
         $b=hb_input(); $email=strtolower(hb_str($b['email']??'',200)); $password=$b['password']??'';
@@ -91,7 +96,7 @@ try {
         if(!$row || !password_verify($password,(string)$row['password_hash'])) hb_json(['error'=>'invalid_credentials'],401);
         session_regenerate_id(true);
         unset($row['password_hash']); $row['id']=(int)$row['id']; $_SESSION['user']=$row; $_SESSION['csrf_token']=bin2hex(random_bytes(32));
-        hb_json(['user'=>$row,'csrfToken'=>$_SESSION['csrf_token']]);
+        hb_json(['user'=>$row,'csrfToken'=>$_SESSION['csrf_token'],'csrf'=>$_SESSION['csrf_token']]);
     }
     if ($action==='logout' && $method==='POST') {
         hb_require_user(); $_SESSION=[]; if(ini_get('session.use_cookies')) { $p=session_get_cookie_params(); setcookie(session_name(),'',(int)(time()-42000),$p['path'],$p['domain']??'',(bool)$p['secure'],(bool)$p['httponly']); }
@@ -99,11 +104,11 @@ try {
     }
     if ($action==='products' && $method==='GET') {
         $q=hb_str($_GET['q']??$_GET['search']??'',100); $cat=hb_str($_GET['category']??'',100);
-        $district=hb_str($_GET['district']??'',100); $sale=hb_str($_GET['saleType']??'',20);
+        $district=hb_str($_GET['district']??'',100); $subcat=hb_str($_GET['subcategory']??'',120); $sale=hb_str($_GET['saleType']??'',20);
         $page=max(1,min(10000,(int)($_GET['page']??1))); $limit=max(1,min(50,(int)($_GET['limit']??20)));
         $where=["status='active'"]; $params=[];
         if($q!==''){ $where[]='(title LIKE ? OR description LIKE ? OR businessName LIKE ?)'; $term='%'.$q.'%'; array_push($params,$term,$term,$term); }
-        if($cat!==''){ $where[]='category=?'; $params[]=$cat; } if($district!==''){ $where[]='district=?'; $params[]=$district; }
+        if($cat!==''){ $where[]='category=?'; $params[]=$cat; } if($subcat!==''){ $where[]='subcategory=?'; $params[]=$subcat; } if($district!==''){ $where[]='district=?'; $params[]=$district; }
         if(in_array($sale,['retail','wholesale'],true)){ $where[]='saleType IN (?,?)'; array_push($params,$sale,'both'); }
         $w=implode(' AND ',$where); $c=$pdo->prepare("SELECT COUNT(*) FROM listings WHERE $w"); $c->execute($params); $total=(int)$c->fetchColumn();
         $st=$pdo->prepare("SELECT id,title,category,subcategory,district,upazila,price,unit,quantity,negotiable,sellerName,businessName,description,images,phone,saleType,minOrderQuantity,deliveryAvailable,created_at FROM listings WHERE $w ORDER BY created_at DESC LIMIT $limit OFFSET ".(($page-1)*$limit)); $st->execute($params);
@@ -137,7 +142,7 @@ try {
             $st=$pdo->prepare("SELECT id,user_id,price,quantity,minOrderQuantity,saleType,status FROM listings WHERE id=? FOR UPDATE"); $st->execute([$listingId]); $l=$st->fetch();
             if(!$l || $l['status']!=='active') { $pdo->rollBack(); hb_json(['error'=>'listing_unavailable'],404); }
             if($quantity<(float)$l['minOrderQuantity'] || $quantity>(float)$l['quantity']) { $pdo->rollBack(); hb_json(['error'=>'quantity_out_of_range'],422); }
-            if($u['role']==='business_buyer' && !in_array($l['saleType'],['wholesale','both'],true)) { $pdo->rollBack(); hb_json(['error'=>'wholesale_listing_required'],422); }
+            if($l['saleType']==='retail' && (float)$quantity < 1) { $pdo->rollBack(); hb_json(['error'=>'quantity_out_of_range'],422); }
             $id='HB'.gmdate('ymd').strtoupper(bin2hex(random_bytes(5)));
             $name=hb_str($b['buyerName']??$u['name'],100); $phone=preg_replace('/[\\s-]/','',hb_str($b['buyerPhone']??$u['phone'],30));
             $email=strtolower(hb_str($b['buyerEmail']??$u['email'],200));
@@ -145,6 +150,10 @@ try {
             $amount=round((float)$l['price']*(float)$quantity,2);
             $ins=$pdo->prepare("INSERT INTO orders(id,listing_id,buyer_id,quantity,buyer_name,buyer_phone,buyer_email,address,amount_bdt,status,payment_status,shipping_status) VALUES(?,?,?,?,?,?,?,?,?,'pending','unpaid','not_requested')");
             $ins->execute([$id,$listingId,(int)$u['id'],(float)$quantity,$name,$phone,$email,$address,$amount]);
+            // Reserve stock in the same transaction as order creation to prevent overselling.
+            $reserve=$pdo->prepare('UPDATE listings SET quantity=quantity-? WHERE id=? AND quantity>=?');
+            $reserve->execute([(float)$quantity,$listingId,(float)$quantity]);
+            if($reserve->rowCount()!==1) { $pdo->rollBack(); hb_json(['error'=>'quantity_out_of_range'],422); }
             $pdo->prepare('INSERT INTO order_status_history(order_id,old_status,new_status,actor_user_id,note) VALUES(?,NULL,?,?,?)')->execute([$id,'pending',(int)$u['id'],'Order created']);
             $pdo->commit(); hb_json(['id'=>$id,'status'=>'pending','amount_bdt'=>$amount],201);
         } catch(Throwable $e) { if($pdo->inTransaction())$pdo->rollBack(); throw $e; }
@@ -170,7 +179,12 @@ try {
             $allowed=['pending','confirmed','processing','shipped','delivered','cancelled']; if(!in_array($status,$allowed,true)) hb_json(['error'=>'invalid_status'],422);
             $pdo->beginTransaction();
             try { $st=$pdo->prepare('SELECT status FROM orders WHERE id=? FOR UPDATE'); $st->execute([$id]); $o=$st->fetch(); if(!$o){$pdo->rollBack();hb_json(['error'=>'not_found'],404);}
-                $old=$o['status']; $pdo->prepare('UPDATE orders SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?')->execute([$status,$id]);
+                $old=$o['status'];
+                if($status==='cancelled' && $old!=='cancelled') {
+                    $restore=$pdo->prepare('SELECT listing_id,quantity FROM orders WHERE id=?'); $restore->execute([$id]); $line=$restore->fetch();
+                    if($line) $pdo->prepare('UPDATE listings SET quantity=quantity+? WHERE id=?')->execute([(float)$line['quantity'],$line['listing_id']]);
+                }
+                $pdo->prepare('UPDATE orders SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?')->execute([$status,$id]);
                 $pdo->prepare('INSERT INTO order_status_history(order_id,old_status,new_status,actor_user_id,note) VALUES(?,?,?,?,?)')->execute([$id,$old,$status,(int)$admin['id'],hb_str($b['note']??'',500)]);
                 $pdo->commit(); hb_json(['ok'=>true,'order_id'=>$id,'status'=>$status]);
             } catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
