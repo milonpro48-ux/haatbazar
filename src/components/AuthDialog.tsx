@@ -1,7 +1,8 @@
 import { useState } from "react";
 
 type Mode = "login" | "register";
-type DemoUser = { name: string; email: string };
+export type DemoRole = "buyer" | "seller" | "wholesaler" | "business";
+export type DemoUser = { name: string; email: string; role: DemoRole };
 type StoredAccount = DemoUser & { passwordHash: string };
 
 const ACCOUNTS_KEY = "haatbazar_demo_accounts_v1";
@@ -25,7 +26,9 @@ function readAccounts(): StoredAccount[] {
 export function readDemoSession(): DemoUser | null {
   try {
     const value = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
-    return value && typeof value.name === "string" && typeof value.email === "string" ? value : null;
+    return value && typeof value.name === "string" && typeof value.email === "string"
+      ? { name: value.name, email: value.email, role: value.role === "seller" || value.role === "wholesaler" || value.role === "business" ? value.role : "buyer" }
+      : null;
   } catch {
     return null;
   }
@@ -40,6 +43,7 @@ type Props = {
 
 export function AuthDialog({ mode, onClose, onModeChange, onSuccess }: Props) {
   const [name, setName] = useState("");
+  const [role, setRole] = useState<DemoRole>("buyer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -76,7 +80,7 @@ export function AuthDialog({ mode, onClose, onModeChange, onSuccess }: Props) {
           setError("এই ইমেইল দিয়ে আগে ডেমো অ্যাকাউন্ট তৈরি হয়েছে। লগইন করুন।");
           return;
         }
-        const user = { name: name.trim(), email: cleanEmail };
+        const user: DemoUser = { name: name.trim(), email: cleanEmail, role };
         const account: StoredAccount = { ...user, passwordHash: await hashPassword(password) };
         localStorage.setItem(ACCOUNTS_KEY, JSON.stringify([...accounts, account]));
         localStorage.setItem(SESSION_KEY, JSON.stringify(user));
@@ -87,7 +91,7 @@ export function AuthDialog({ mode, onClose, onModeChange, onSuccess }: Props) {
         setError("ইমেইল বা পাসওয়ার্ড সঠিক নয়।");
         return;
       }
-      const user = { name: existing.name, email: existing.email };
+      const user: DemoUser = { name: existing.name, email: existing.email, role: existing.role === "seller" || existing.role === "wholesaler" || existing.role === "business" ? existing.role : "buyer" };
       localStorage.setItem(SESSION_KEY, JSON.stringify(user));
       onSuccess(user);
     } catch {
@@ -111,7 +115,7 @@ export function AuthDialog({ mode, onClose, onModeChange, onSuccess }: Props) {
           ডেমো মোড: অ্যাকাউন্টের তথ্য শুধু এই ব্রাউজারে রাখা হয়। এটি আসল সার্ভার-ভিত্তিক অ্যাকাউন্ট নয়; বাস্তব ব্যবহারকারীর পাসওয়ার্ড এখানে ব্যবহার করবেন না।
         </div>
         <form onSubmit={submit} className="space-y-4">
-          {mode === "register" && <label className="block text-sm font-semibold">আপনার নাম<input autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100" /></label>}
+          {mode === "register" && <><label className="block text-sm font-semibold">আপনার নাম<input autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100" /></label><label className="block text-sm font-semibold">আপনি কীভাবে HaatBazar ব্যবহার করবেন?<select value={role} onChange={(e) => setRole(e.target.value as DemoRole)} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"><option value="buyer">সাধারণ ক্রেতা</option><option value="seller">খুচরা বিক্রেতা</option><option value="wholesaler">পাইকারি বিক্রেতা</option><option value="business">দোকান / ব্যবসায়িক ক্রেতা</option></select></label><p className="text-xs text-slate-500">অ্যাডমিন অ্যাকাউন্ট সাধারণ রেজিস্ট্রেশনে তৈরি করা যায় না।</p></>}
           <label className="block text-sm font-semibold">ইমেইল<input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100" /></label>
           <label className="block text-sm font-semibold">পাসওয়ার্ড<input type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100" /></label>
           {mode === "register" && <label className="block text-sm font-semibold">পাসওয়ার্ড আবার লিখুন<input type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} minLength={8} required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100" /></label>}
