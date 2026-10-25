@@ -50,3 +50,31 @@ jobs:
           for table in users listings orders analytics_events uploaded_images marketing_settings otp_challenges seller_verifications payment_transactions courier_shipments order_status_history; do
             case " $actual " in *" $table "*) ;; *) echo "Missing table: $table"; exit 1 ;; esac
           done
+      - name: Prepare isolated smoke-test config
+        run: |
+          cp php-api/config.example.php php-api/config.local.php
+          cat > php-api/config.local.php <<'PHP'
+          <?php
+          declare(strict_types=1);
+          return [
+            'db' => [
+              'host' => '127.0.0.1',
+              'name' => 'haatbazar_test',
+              'user' => 'root',
+              'password' => 'test-root-password',
+              'charset' => 'utf8mb4',
+            ],
+            'session_name' => 'hb_test',
+            'session_secure' => false,
+          ];
+          PHP
+      - name: Smoke test API routes and fail-closed behavior
+        run: |
+          php -S 127.0.0.1:8080 php-api/index.php > /tmp/haatbazar-php-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; rm -f php-api/config.local.php' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:8080/api/healthz >/dev/null; then break; fi
+            sleep 1
+          done
+          bash php-api/tests/smoke.sh
