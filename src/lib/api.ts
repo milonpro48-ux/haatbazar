@@ -51,7 +51,7 @@ const SAMPLE: Listing[] = CATEGORIES.flatMap((category, categoryIndex) =>
       businessName: category.label + " নমুনা দোকান",
       description: subcategory + " বিভাগের প্রদর্শনী নমুনা পণ্য। অর্ডারের আগে পণ্যের মান, মজুদ, প্রতি এককের দাম ও ডেলিভারির শর্ত বিক্রেতার সঙ্গে নিশ্চিত করুন।",
       images: SAMPLE_IMAGE_BY_SUBCATEGORY[subcategory] ? [SAMPLE_IMAGE_BY_SUBCATEGORY[subcategory]] : [],
-      saleType: saleTypes[productIndex], minOrderQuantity: productIndex === 1 || productIndex === 4 ? 5 : 1,
+      saleType: saleTypes[productIndex], minOrderQuantity: 1,
       deliveryAvailable: true,
     };
   })

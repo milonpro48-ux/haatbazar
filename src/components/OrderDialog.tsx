@@ -1,20 +1,20 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Minus, Plus } from "lucide-react";
 import { createOrder, startPayment, LOGIN_URL, type Listing } from "@/lib/api";
 import { money, bn, unitLabel } from "@/lib/data";
 
 const field = "w-full rounded-lg border bg-background px-3 py-2";
 
 export function OrderDialog({ item, onClose, onDone }: { item: Listing; onClose: () => void; onDone: (msg: string) => void }) {
-  const [qty, setQty] = useState(Math.max(1, item.minOrderQuantity || 1));
+  const [qty, setQty] = useState(1);
   const [busy, setBusy] = useState(false);
   const [needLogin, setNeedLogin] = useState(false);
   const [error, setError] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"later"|"bkash"|"nagad"|"rocket">("later");
   const [pendingPaymentOrderId, setPendingPaymentOrderId] = useState("");
-  const minQty = Math.max(1, item.minOrderQuantity || 1);
-  const q = Math.min(Math.max(minQty, qty || minQty), item.quantity);
-  const total = item.price * q;
+  const maxQty = Math.max(1, item.quantity);
+  const q = Math.min(Math.max(1, Number.isFinite(qty) ? qty : 1), maxQty);
+  const total = Math.round(item.price * q * 100) / 100;
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -55,14 +55,26 @@ export function OrderDialog({ item, onClose, onDone }: { item: Listing; onClose:
         </div>
         <div className="rounded-lg bg-emerald-50 p-3 dark:bg-emerald-950">
           <p className="font-semibold">{item.title}</p>
-          <p className="text-sm text-muted-foreground">{money(item.price)} / {unitLabel(item.unit)} · {item.sellerName}</p>
+          <p className="text-sm text-muted-foreground">{money(item.price)} · {item.sellerName}</p>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <label className="text-sm text-muted-foreground">পরিমাণ (সর্বোচ্চ {bn(item.quantity)})
-            <input type="number" min={minQty} max={item.quantity} value={qty} onChange={(e) => setQty(Number(e.target.value))} className={field} />
-          </label>
-          <div className="text-sm text-muted-foreground">মোট দাম
-            <p className="pt-2 text-lg font-bold text-emerald-700 dark:text-emerald-400">{money(total)}</p>
+        <div className="space-y-3 rounded-xl border p-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium">পরিমাণ (সর্বোচ্চ {bn(item.quantity)} {unitLabel(item.unit)})</span>
+            <div className="flex items-center gap-2">
+              <button type="button" aria-label="পরিমাণ এক কমান" disabled={q <= 1} onClick={() => setQty(Math.max(1, q - 1))} className="grid h-9 w-9 place-items-center rounded-lg border disabled:opacity-40"><Minus size={16}/></button>
+              <input aria-label="পণ্যের পরিমাণ" type="number" min={1} max={maxQty} step="any" value={qty} onChange={(e) => setQty(e.target.value === "" ? 1 : Number(e.target.value))} onBlur={() => setQty(q)} className="w-20 rounded-lg border bg-background px-2 py-2 text-center font-semibold" />
+              <button type="button" aria-label="পরিমাণ এক বাড়ান" disabled={q >= maxQty} onClick={() => setQty(Math.min(maxQty, q + 1))} className="grid h-9 w-9 place-items-center rounded-lg border disabled:opacity-40"><Plus size={16}/></button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t pt-3">
+            <div>
+              <p className="text-sm text-muted-foreground">হিসাব: {money(item.price)} × {bn(q)}</p>
+              <p className="text-sm text-muted-foreground">প্রতি পণ্যের দাম</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground">মোট দাম (পরিমাণ অনুযায়ী)</p>
+              <p aria-live="polite" className="text-xl font-extrabold text-emerald-700 dark:text-emerald-400">{money(total)}</p>
+            </div>
           </div>
         </div>
         <input name="name" required placeholder="আপনার নাম" className={field} />
