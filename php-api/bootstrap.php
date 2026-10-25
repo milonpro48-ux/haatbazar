@@ -74,8 +74,11 @@ function hb_require_admin(): array {
     return $user;
 }
 function hb_csrf_check(): void {
-    if (in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD', 'OPTIONS'], true)) return;
+    if (in_array(strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')), ['GET', 'HEAD', 'OPTIONS'], true)) return;
     $sent = (string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
     $expected = (string)($_SESSION['csrf_token'] ?? '');
     if ($sent === '' || $expected === '' || !hash_equals($expected, $sent)) hb_json(['error' => 'csrf_failed'], 403);
 }
+
+// Enforce CSRF on state-changing requests before the router handles them.
+hb_csrf_check();
