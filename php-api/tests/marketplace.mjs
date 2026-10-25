@@ -55,6 +55,13 @@ async function main(){
  assert.ok(listing.id);
  const duplicate=client();await duplicate.init();
  await duplicate.call('register',{method:'POST',expect:409,body:{name:'Duplicate',email:`seller-${suffix}@example.test`,phone:'01712345678',password:'SellerPassword123!',role:'buyer'}});
+ const badLogin=client();await badLogin.init();
+ await badLogin.call('login',{method:'POST',expect:401,body:{email:`seller-${suffix}@example.test`,password:'DefinitelyWrongPassword!'}});
+ const injection=await seller.call('products',{query:{q:"%' OR 1=1 --"}});
+ assert.equal(injection.items.length,0,'search input must be treated as data, not SQL');
+ const otherSeller=client();await otherSeller.init();
+ await otherSeller.call('register',{method:'POST',expect:201,body:{name:'Other Seller',email:`other-seller-${suffix}@example.test`,phone:'01712345679',password:'OtherSellerPassword123!',role:'seller'}});
+ await otherSeller.call('update_listing',{method:'POST',expect:403,body:{id:listing.id,title:'Hijacked listing',category:'grocery',subcategory:'rice',district:'Bogra',price:100,unit:'kg',quantity:100,description:'Attempt to edit another seller listing',phone:'01712345679',saleType:'wholesale',minOrderQuantity:10}});
  const buyer=client();await buyer.init();
  const buyerReg=await buyer.call('register',{method:'POST',expect:201,body:{name:'Shop Buyer',email:`buyer-${suffix}@example.test`,phone:'01812345678',password:'BuyerPassword123!',role:'business_buyer'}});
  assert.equal(buyerReg.user.role,'business_buyer');
@@ -76,6 +83,8 @@ async function main(){
  assert.equal(status,'1','order status change must create audit history');
  await admin.call('admin_products');
  console.log('PASS CSRF blocks state-changing request without token');
+ console.log('PASS invalid password is rejected and SQL-injection search is treated as data');
+ console.log('PASS sellers cannot edit listings owned by another seller');
  console.log('PASS registration creates seller/buyer accounts without allowing admin self-registration');
  console.log('PASS duplicate email is rejected');
  console.log('PASS wholesale seller listing supports minimum order quantity');
