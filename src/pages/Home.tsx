@@ -11,6 +11,7 @@ import MyOrders from "@/pages/MyOrders";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { PostAdDialog } from "@/components/PostAdDialog";
 import { OrderDialog } from "@/components/OrderDialog";
+import { AuthDialog, readDemoSession } from "@/components/AuthDialog";
 
 const whatsappNumber = (import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
 
@@ -45,6 +46,8 @@ export default function Home() {
   const [ordering, setOrdering] = useState<Listing | null>(null);
   const [toast, setToast] = useState("");
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [demoUser, setDemoUser] = useState<{ name: string; email: string } | null>(() => readDemoSession());
+  const [authMode, setAuthMode] = useState<"login" | "register" | null>(null);
 
   useEffect(() => { initializeAnalytics(); }, []);
   useEffect(() => {
@@ -122,9 +125,17 @@ export default function Home() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4">
           <Link href="/" aria-label="Haat Bazar homepage" className="flex shrink-0 items-center gap-3 text-xl font-extrabold tracking-tight text-emerald-800 transition hover:opacity-90 sm:text-2xl dark:text-emerald-300"><span className="grid h-11 w-11 place-items-center rounded-xl bg-orange-500 text-white shadow-sm ring-2 ring-orange-100"><Store size={24} strokeWidth={2.4} /></span><span className="leading-tight">Haat <span className="text-orange-600">Bazar</span><small className="mt-0.5 block text-[10px] font-semibold tracking-wide text-muted-foreground">বাংলার অনলাইন বাজার</small></span></Link>
           <div className="flex items-center gap-2">
-            <a href="/api/login" className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">লগইন</a>
-            <a href="/api/register" className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600">সাইন আপ</a>
-            <a href="/api/account" className="hidden rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted sm:inline-flex">আমার অ্যাকাউন্ট</a>
+            {demoUser ? (
+              <>
+                <span className="hidden max-w-32 truncate text-sm font-semibold sm:inline">স্বাগতম, {demoUser.name}</span>
+                <button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setToast("ডেমো অ্যাকাউন্ট থেকে লগআউট হয়েছে।"); }} className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">লগআউট</button>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={() => setAuthMode("login")} className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">লগইন</button>
+                <button type="button" onClick={() => setAuthMode("register")} className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600">সাইন আপ</button>
+              </>
+            )}
             <a href="/my-orders" className="hidden rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted sm:inline-flex">আমার অর্ডার</a>
             <button onClick={() => setPosting(true)} className="flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700">
               <Plus size={18} /> বিজ্ঞাপন দিন
@@ -279,6 +290,7 @@ export default function Home() {
           onDone={(m) => { setToast(m); setTimeout(() => setToast(""), 3500); }} />
       )}
       {toast && <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-foreground px-4 py-2 text-background">{toast}</div>}
+      {authMode && <AuthDialog mode={authMode} onClose={() => setAuthMode(null)} onModeChange={setAuthMode} onSuccess={(user) => { setDemoUser(user); setAuthMode(null); setToast("ডেমো " + (authMode === "register" ? "রেজিস্ট্রেশন" : "লগইন") + " সফল হয়েছে।"); setTimeout(() => setToast(""), 3500); }} />}
       {posting && <PostAdDialog onClose={() => setPosting(false)} onDone={() => setTick((t) => t + 1)} />}
       {whatsappNumber && (
         <a
