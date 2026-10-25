@@ -182,7 +182,7 @@ try {
             $b=hb_input(); $id=hb_str($b['id']??'',80); $sets=[];$vals=[];
             foreach(['title'=>120,'category'=>100,'subcategory'=>120,'district'=>100,'status'=>20] as $key=>$max) if(array_key_exists($key,$b)) { $value=hb_str($b[$key],$max); if($key==='status'&&!in_array($value,['active','paused','sold','removed'],true))hb_json(['error'=>'invalid_status'],422); if($value==='')hb_json(['error'=>'invalid_'.$key],422);$sets[]="$key=?";$vals[]=$value; }
             foreach(['price','quantity','minOrderQuantity'] as $key) if(array_key_exists($key,$b)){ $n=filter_var($b[$key],FILTER_VALIDATE_FLOAT); if($n===false||$n<0||($key==='minOrderQuantity'&&$n<1))hb_json(['error'=>'invalid_'.$key],422);$sets[]="$key=?";$vals[]=$n; }
-            if(!$sets||$id==='')hb_json(['error'=>'invalid_update'],422); $vals[]=$id; $st=$pdo->prepare('UPDATE listings SET '.implode(',',$sets).' WHERE id=?');$st->execute($vals); if(!$st->rowCount()&&$st->execute()){} hb_json(['ok'=>true,'id'=>$id]);
+            if(!$sets||$id==='')hb_json(['error'=>'invalid_update'],422); $vals[]=$id; $st=$pdo->prepare('UPDATE listings SET '.implode(',',$sets).' WHERE id=?');$st->execute($vals); if($st->rowCount()===0){$check=$pdo->prepare('SELECT id FROM listings WHERE id=?');$check->execute([$id]);if(!$check->fetch())hb_json(['error'=>'not_found'],404);} hb_json(['ok'=>true,'id'=>$id]);
         }
         if($action==='admin_product_delete' && $method==='POST') { $b=hb_input();$id=hb_str($b['id']??'',80);$st=$pdo->prepare("UPDATE listings SET status='removed' WHERE id=?");$st->execute([$id]);if(!$st->rowCount())hb_json(['error'=>'not_found'],404);hb_json(['ok'=>true,'id'=>$id,'status'=>'removed']); }
         hb_json(['error'=>'not_found'],404);
