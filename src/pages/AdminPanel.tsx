@@ -31,7 +31,7 @@ export default function AdminPanel({onBack}:Props){
  const [newCategory,setNewCategory]=useState(CATEGORIES[0].key);
  const [newSubcategory,setNewSubcategory]=useState(CATEGORIES[0].subcategories[0]);
  const refresh=useCallback(async()=>{
-  setLoading(true);setError("");setNotice("");
+  setLoading(true);setError("");
   try{
    const [p,o]=await Promise.all([
     request<{items:Product[]}>("/api/admin/products?limit=100"),
