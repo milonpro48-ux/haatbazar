@@ -130,7 +130,7 @@ export default function Home() {
       <nav className="bg-emerald-900 text-white"><div className="mx-auto flex max-w-6xl gap-6 overflow-x-auto px-4 py-3 text-sm font-semibold"><Link href="/" className="shrink-0">☰ সব ক্যাটাগরি</Link><a href="#products" className="shrink-0">আজকের পণ্য</a><a href="#popular" className="shrink-0">জনপ্রিয় ক্যাটাগরি</a><a href="#why" className="shrink-0">কেন হাটবাজার</a></div></nav>
       <div className="px-4 py-1 text-center text-xs font-semibold">MSA</div>
       <section className="bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 py-10 text-white">
-        <div className="mx-auto max-w-6xl px-4">
+        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 lg:grid-cols-[1.15fr_0.85fr]">
           <h1 className="max-w-5xl text-3xl font-extrabold leading-tight md:text-5xl">{routeCategory ? `${routeCategory.label} — খুচরা ও পাইকারি বাজার` : routeDistrict ? `${routeDistrict} জেলার অনলাইন হাটবাজার` : "বাংলাদেশের কেনাবেচা, এখন হাটবাজারে"}</h1>
           <p className="mb-5 mt-2 opacity-90">খুচরা ও পাইকারি পণ্য খুঁজুন, বিক্রি করুন এবং সরাসরি বিক্রেতার সঙ্গে যোগাযোগ করুন।</p>
           <p className="mb-3 max-w-3xl text-sm opacity-90">{routeCategory ? `${routeCategory.label} বিভাগে পণ্য, খুচরা দাম এবং পাইকারি সরবরাহকারী খুঁজুন।` : "সারা বাংলাদেশে পণ্য কিনুন বা বিক্রি করুন—খুচরা ও পাইকারি, দুই ধরনের ক্রেতার জন্যই।"}</p>
@@ -143,6 +143,18 @@ export default function Home() {
               <option value="">সারা বাংলাদেশ</option>
               {DISTRICTS.map((d) => <option key={d}>{d}</option>)}
             </select>
+          </div>
+          <div className="relative mx-auto mt-8 grid aspect-square w-full max-w-[360px] place-items-center lg:mt-0" aria-label="আপনার এলাকার হাট, কেনা-বেচা সহজ, সারা বাংলাদেশ">
+            <div className="absolute inset-[4%] rounded-full border border-amber-300/30" />
+            <div className="absolute inset-[11%] rounded-full border border-amber-300/20" />
+            <div className="absolute inset-[18%] rounded-full border border-amber-300/20" />
+            <div className="absolute inset-[24%] rounded-full bg-emerald-700/50" />
+            <div className="relative grid h-[48%] w-[48%] place-items-center rounded-full bg-amber-400/90 text-emerald-950 shadow-[0_0_0_12px_rgba(234,179,8,0.08)]">
+              <Store size={66} strokeWidth={1.5} />
+            </div>
+            <span className="absolute left-[2%] top-[14%] -rotate-6 rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-emerald-950 shadow-md">আপনার এলাকার হাট</span>
+            <span className="absolute right-[-1%] top-[38%] rotate-3 rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-emerald-950 shadow-md">কেনা-বেচা সহজ</span>
+            <span className="absolute bottom-[12%] left-[12%] rotate-2 rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-emerald-950 shadow-md">সারা বাংলাদেশ</span>
           </div>
         </div>
       </section>
