@@ -9,7 +9,14 @@ RewriteRule ^api/account/?$ api/index.php?action=account [QSA,L]
 RewriteRule ^api/logout/?$ api/index.php?action=logout [QSA,L]
 RewriteRule ^api/me/?$ api/index.php?action=me [QSA,L]
 RewriteRule ^api/csrf/?$ api/index.php?action=csrf [QSA,L]
+RewriteCond %{REQUEST_METHOD} =GET
 RewriteRule ^api/listings/?$ api/index.php?action=products [QSA,L]
+RewriteCond %{REQUEST_METHOD} =POST
+RewriteRule ^api/listings/?$ api/index.php?action=create_listing [QSA,L]
+RewriteRule ^api/listings/([^/]+)/?$ api/index.php?action=listing&id=$1 [QSA,L]
+RewriteRule ^api/orders/?$ api/index.php?action=orders [QSA,L]
+RewriteRule ^api/admin/orders/?$ api/index.php?action=admin_orders [QSA,L]
+RewriteRule ^api/seller/orders/?$ api/index.php?action=seller_orders [QSA,L]
 
 # Keep configuration and SQL files private.
 <FilesMatch "^(config\.php|config\.example\.php|schema\.sql)$">
