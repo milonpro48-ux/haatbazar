@@ -186,7 +186,7 @@ try {
                     'processing' => ['processing','shipped','cancelled'],
                     'shipped' => ['shipped','delivered'],
                     'delivered' => ['delivered'],
-                    'cancelled' => ['cancelled'],
+                    'cancelled' => [],
                 ];
                 if (!in_array($status, $transitions[$old] ?? [], true)) { $pdo->rollBack(); hb_json(['error'=>'invalid_status_transition','from'=>$old,'to'=>$status],422); }
                 if($status==='cancelled' && $old!=='cancelled') {
