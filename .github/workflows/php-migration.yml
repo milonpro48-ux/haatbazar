@@ -1,0 +1,52 @@
+name: PHP migration checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'php-api/**'
+      - 'docs/infinityfree-php-mysql-migration.md'
+      - '.github/workflows/php-migration.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'php-api/**'
+      - 'docs/infinityfree-php-mysql-migration.md'
+
+jobs:
+  php-lint-and-schema:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test-root-password
+          MYSQL_DATABASE: haatbazar_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptest-root-password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PHP with PDO MySQL
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql
+      - name: PHP syntax checks
+        run: find php-api -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Import schema into clean MySQL database
+        env:
+          MYSQL_PWD: test-root-password
+        run: mysql --host=127.0.0.1 --user=root haatbazar_test < php-api/schema.sql
+      - name: Verify expected tables exist
+        env:
+          MYSQL_PWD: test-root-password
+        run: |
+          actual="$(mysql --batch --skip-column-names --host=127.0.0.1 --user=root haatbazar_test -e "SHOW TABLES" | sort | tr '\n' ' ')"
+          for table in users listings orders analytics_events uploaded_images marketing_settings otp_challenges seller_verifications payment_transactions courier_shipments order_status_history; do
+            case " $actual " in *" $table "*) ;; *) echo "Missing table: $table"; exit 1 ;; esac
+          done
