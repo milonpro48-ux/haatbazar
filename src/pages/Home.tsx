@@ -125,7 +125,11 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="bg-orange-500 px-4 py-1.5 text-center text-xs font-semibold text-white">🇧🇩 সারা বাংলাদেশে কেনাবেচা · Help & Support · Become a Seller</div>\n      <nav className="bg-emerald-900 text-white"><div className="mx-auto flex max-w-6xl gap-6 overflow-x-auto px-4 py-3 text-sm font-semibold"><Link href="/" className="shrink-0">☰ সব ক্যাটাগরি</Link><a href="#products" className="shrink-0">আজকের পণ্য</a><a href="#popular" className="shrink-0">জনপ্রিয় ক্যাটাগরি</a><a href="#why" className="shrink-0">কেন হাটবাজার</a></div></nav>\n      <section className="bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 py-10 text-white">
+      <div className="bg-orange-500 px-4 py-1.5 text-center text-xs font-semibold text-white">🇧🇩 সারা বাংলাদেশে কেনাবেচা · Help & Support · Become a Seller</div>
+      <div className="px-4 py-1 text-center text-xs font-semibold">MSA</div>
+      <nav className="bg-emerald-900 text-white"><div className="mx-auto flex max-w-6xl gap-6 overflow-x-auto px-4 py-3 text-sm font-semibold"><Link href="/" className="shrink-0">☰ সব ক্যাটাগরি</Link><a href="#products" className="shrink-0">আজকের পণ্য</a><a href="#popular" className="shrink-0">জনপ্রিয় ক্যাটাগরি</a><a href="#why" className="shrink-0">কেন হাটবাজার</a></div></nav>
+      <div className="px-4 py-1 text-center text-xs font-semibold">MSA</div>
+      <section className="bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 py-10 text-white">
         <div className="mx-auto max-w-6xl px-4">
           <h1 className="max-w-5xl text-3xl font-extrabold leading-tight md:text-5xl">{routeCategory ? `${routeCategory.label} — খুচরা ও পাইকারি বাজার` : routeDistrict ? `${routeDistrict} জেলার অনলাইন হাটবাজার` : "বাংলাদেশের কেনাবেচা, এখন হাটবাজারে"}</h1>
           <p className="mb-5 mt-2 opacity-90">খুচরা ও পাইকারি পণ্য খুঁজুন, বিক্রি করুন এবং সরাসরি বিক্রেতার সঙ্গে যোগাযোগ করুন।</p>
