@@ -10,6 +10,8 @@ import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { PostAdDialog } from "@/components/PostAdDialog";
 import { OrderDialog } from "@/components/OrderDialog";
 
+const whatsappNumber = (import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
+
 const why = [
   { icon: Store, title: "চেনা মুখ, চেনা স্বাদ", body: "বিক্রেতার নাম, এলাকা ও ফোন নম্বর সব খোলা।" },
   { icon: Leaf, title: "টাটকা মানে সত্যিই টাটকা", body: "সরাসরি কৃষকের কাছ থেকে, স্টকে বসে থাকা মাল নয়।" },
@@ -272,6 +274,18 @@ export default function Home() {
       )}
       {toast && <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-foreground px-4 py-2 text-background">{toast}</div>}
       {posting && <PostAdDialog onClose={() => setPosting(false)} onDone={() => setTick((t) => t + 1)} />}
+      {whatsappNumber && (
+        <a
+          href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("হ্যালো HaatBazar, আমি সহায়তা চাই।")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="WhatsApp-এ HaatBazar support-এর সঙ্গে যোগাযোগ করুন"
+          className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-3 font-semibold text-white shadow-lg transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2"
+        >
+          <span aria-hidden="true" className="text-xl">☏</span>
+          <span>WhatsApp সহায়তা</span>
+        </a>
+      )}
     </div>
   );
 }
