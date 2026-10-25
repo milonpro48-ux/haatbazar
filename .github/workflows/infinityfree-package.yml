@@ -1,0 +1,77 @@
+name: Package HaatBazar for InfinityFree
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "infinityfree/**"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".github/workflows/infinityfree-package.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "infinityfree/**"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".github/workflows/infinityfree-package.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate frontend and PHP syntax
+        run: |
+          npm run build
+          find infinityfree -name '*.php' -print0 | xargs -0 -n1 php -l
+        env:
+          VITE_DEMO_MODE: "false"
+      - name: Assemble upload package
+        run: |
+          rm -rf release/haatbazar-infinityfree
+          mkdir -p release/haatbazar-infinityfree
+          cp -a dist/. release/haatbazar-infinityfree/
+          cp -a infinityfree/. release/haatbazar-infinityfree/
+          cat > release/haatbazar-infinityfree/DEPLOY-FIRST.txt <<'EOF'
+          HaatBazar InfinityFree upload package
+
+          1. Create a MySQL database in InfinityFree and import database/schema.sql using phpMyAdmin.
+          2. Copy config.example.php to config.php and enter the exact DB hostname, DB name, username and password shown in the InfinityFree control panel.
+          3. Set public_base_url to https://haatbazar1.kesug.com.
+          4. Upload the CONTENTS of this folder to the domain's htdocs folder. Do not upload the release parent folder itself.
+          5. Confirm config.php is not committed to GitHub and is blocked from direct web access by .htaccess.
+          6. Create the first admin using a password_hash() value; never store a plaintext password.
+          7. Test login, listing, COD order, admin access and payment sandbox callbacks before accepting real orders.
+          8. This package does not include live payment credentials and does not prove the live host/database is configured.
+          EOF
+          cd release
+          zip -qr haatbazar-infinityfree.zip haatbazar-infinityfree
+      - name: Upload InfinityFree package
+        uses: actions/upload-artifact@v4
+        with:
+          name: haatbazar-infinityfree
+          path: release/haatbazar-infinityfree.zip
+          if-no-files-found: error
+          retention-days: 14
