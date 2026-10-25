@@ -143,6 +143,8 @@ async function main() {
   assert.ok(adminOrders.items.some(item => item.id === order.id), 'admin must see the buyer order');
   const adminProducts = await admin.call('admin_products', { query: { limit: 100 } });
   assert.ok(adminProducts.items.some(item => item.id === listing.id), 'admin must see seller products');
+  const adminCreated = await admin.call('admin_product_create', { method: 'POST', expect: 201, body: { title: 'Admin-created test product', category: 'electronics', subcategory: 'টিভি ও অডিও', district: 'ঢাকা', price: 1500, unit: 'piece', quantity: 3, description: 'Product created by the admin integration test.', phone: '01712345678', sellerName: 'Test Admin' } });
+  assert.ok(adminCreated.id, 'admin should be able to create a product');
   await admin.call('admin_product_update', { method: 'POST', body: { id: listing.id, title: 'Integration test TV updated', price: 2600, quantity: 7, status: 'active' } });
   const updatedProducts = await admin.call('admin_products', { query: { limit: 100 } });
   const updatedListing = updatedProducts.items.find(item => item.id === listing.id);
@@ -162,7 +164,7 @@ async function main() {
   console.log('PASS seller can see orders for their listing');
   console.log('PASS buyer order history is scoped to the logged-in buyer');
   console.log('PASS admin can see buyer order and seller products');
-  console.log('PASS admin product edits persist in MySQL');
+  console.log('PASS admin can create a product and product edits persist in MySQL');
   console.log('PASS admin order status and audit record persist');
   console.log('PASS Steadfast booking fails closed without private credentials');
   console.log('PASS admin product removal persists as a soft delete');
