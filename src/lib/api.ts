@@ -112,7 +112,7 @@ async function mutationHeaders(): Promise<Record<string, string>> {
 }
 
 export async function uploadListingImages(files: File[]): Promise<string[] | null> {
-  if (files.length > 5 || files.some(f => f.size < 1 || f.size > 4 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(f.type))) return null;
+  if (files.length > 5 || files.some(f => f.size < 1 || f.size > 2 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(f.type))) return null;
   const urls: string[] = [];
   try {
     for (const file of files) {
