@@ -92,6 +92,19 @@ try {
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         CONSTRAINT fk_courier_order FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS order_status_audit (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        order_id VARCHAR(120) NOT NULL,
+        admin_user_id BIGINT UNSIGNED NOT NULL,
+        old_status VARCHAR(40) NOT NULL,
+        new_status VARCHAR(40) NOT NULL,
+        old_shipping_status VARCHAR(40) NOT NULL,
+        new_shipping_status VARCHAR(40) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_order_audit_order(order_id,created_at),
+        CONSTRAINT fk_order_audit_order_runtime FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE,
+        CONSTRAINT fk_order_audit_admin_runtime FOREIGN KEY(admin_user_id) REFERENCES users(id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     if ($action === 'csrf') out(['csrf' => $_SESSION['csrf']]);
 
     if ($action === 'upload_product_image' && $_SERVER['REQUEST_METHOD'] === 'POST') {
