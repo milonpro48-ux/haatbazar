@@ -1,27 +1,28 @@
-# HaatBazar — InfinityFree PHP/MySQL migration starter
+# HaatBazar — InfinityFree PHP/MySQL deployment adapter
 
-This folder is a separate hosting adapter so the existing Node.js app remains untouched while the InfinityFree-compatible backend is built.
+This folder contains the PHP/MySQL adapter intended to run on the same domain as the built React frontend. The frontend calls relative `/api` URLs; `.htaccess` maps supported routes to `api/index.php` and falls back to `index.html` for client-side React routes.
 
-## Included
-- api/index.php: PHP/MySQL API for product listing/detail, seller product creation, buyer order creation, seller/admin order listing, registration/login/logout, COD checkout, admin order status changes, and SSLCOMMERZ callback validation.
-- config.example.php: private server configuration template.
-- database/schema.sql: MySQL schema for users, listings, orders, and payment transactions.
+## Create a deployment ZIP
+
+The GitHub Actions workflow **Package HaatBazar for InfinityFree** builds the frontend with demo mode disabled, runs the TypeScript/Vite build and PHP syntax checks, and uploads an artifact named `haatbazar-infinityfree`. Download the ZIP from the successful workflow run's Artifacts section. This validates packaging and syntax only; it does not connect to your live hosting account or database.
 
 ## Install on InfinityFree
-1. Create the hosting account and domain/subdomain; enable HTTPS.
-2. Create a MySQL database in the InfinityFree control panel.
-3. Import database/schema.sql into that database using phpMyAdmin.
-4. Upload the contents of infinityfree/ to your website folder. Protect config.php and database files from direct web access using server rules; keep credentials outside public folders when your hosting setup allows it.
-5. Copy config.example.php to config.php; set database connection, public base URL, and SSLCOMMERZ sandbox credentials. Never commit the real config.
-6. Seed products and create the first admin account by generating a password hash with PHP password_hash('YOUR_LONG_PASSWORD', PASSWORD_DEFAULT) and inserting the hash into users.password_hash. Do not use a plaintext password in SQL.
-7. Configure SSLCOMMERZ sandbox IPN URL as https://YOUR_DOMAIN/api/?action=sslcommerz_ipn.
-8. Test COD orders, then SSLCOMMERZ sandbox success/failure/cancel flows. Do not enable live mode until merchant approval and end-to-end verification.
 
-## Important current limitations
-- This is an API foundation, not yet a complete production deployment. The React frontend still needs to be wired to these API routes.
-- The current order schema supports one product line per order record. COD can create one order record per cart line; online checkout currently requires one line at a time.
-- Seller product creation and buyer order creation use the same MySQL tables as the homepage and admin/seller order endpoints. The frontend sends the PHP session CSRF token on these mutations. The PHP API syntax is checked in CI, but live MySQL end-to-end testing still requires a configured staging database.
-- Product image upload/editing, password reset, throttling, account verification, and a full admin UI still need to be completed and tested. For now, create listings without uploaded images on InfinityFree.
-- Never put SSLCOMMERZ credentials in JavaScript or expose them in GitHub.
+1. In the InfinityFree control panel, add/confirm `haatbazar1.kesug.com` and enable HTTPS.
+2. Create a MySQL database. Copy the exact database hostname, database name, username, and password shown by InfinityFree; the hostname is not normally `localhost`.
+3. Open phpMyAdmin for that database and import `database/schema.sql` from the ZIP.
+4. Copy `config.example.php` to `config.php` in the ZIP's root. Fill in the real DB details and set `public_base_url` to `https://haatbazar1.kesug.com`. Keep the real `config.php` private and never commit it to GitHub.
+5. Upload the *contents* of the ZIP's `haatbazar-infinityfree` folder into the domain's `htdocs` directory. Do not upload the parent folder as a nested directory. Keep `.htaccess` enabled.
+6. Create the first admin user with a PHP `password_hash()` result stored in `users.password_hash`; never store a plaintext password.
+7. Start with test listings and cash-on-delivery. Verify login/logout, session/CSRF, listing create/read, buyer order, seller/admin permissions, and deep links.
+8. Configure SSLCommerz sandbox credentials privately and verify success/failure/cancel/IPN callbacks before considering live payment. Do not treat a browser redirect alone as proof of payment.
 
-SSLCOMMERZ official flow requires a server-created payment session and server-side validation of the transaction/IPN before treating it as paid: https://developer.sslcommerz.com/doc/v4/index.html
+## Current limitations / launch blockers
+
+- The package does not include your hosting account's database credentials, seeded admin user, real payment credentials, or any provider secrets.
+- Live MySQL/InfinityFree end-to-end testing is still required after upload.
+- Product image upload/editing, password reset, throttling, account verification, courier/SMS integrations, and a complete admin UI are not yet production-complete.
+- The schema supports one product line per order record; online checkout currently requires one line at a time.
+- Do not enable real payments or advertise the marketplace as fully operational until the test checklist passes.
+
+SSLCOMMERZ requires server-side transaction validation before an order is treated as paid: https://developer.sslcommerz.com/doc/v4/index.html
