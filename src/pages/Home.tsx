@@ -50,6 +50,7 @@ export default function Home() {
   const [authMode, setAuthMode] = useState<"login" | "register" | null>(null);
 
   useEffect(() => { initializeAnalytics(); }, []);
+  useEffect(() => { if (path === "/dashboard" && !demoUser) setAuthMode("login"); }, [path, demoUser]);
   useEffect(() => {
     if (!productId) { setProduct(null); return; }
     let active = true;
@@ -113,6 +114,36 @@ export default function Home() {
         (!saleType || i.saleType === saleType || i.saleType === "both"))
     : [];
 
+  if (path === "/dashboard" && demoUser) return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <header className="border-b bg-white shadow-sm">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4">
+          <Link href="/" className="text-xl font-extrabold text-emerald-800">Haat <span className="text-orange-600">Bazar</span></Link>
+          <button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setLocation("/"); setToast("ডেমো অ্যাকাউন্ট থেকে লগআউট হয়েছে।"); }} className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-slate-100">লগআউট</button>
+        </div>
+      </header>
+      <main className="mx-auto max-w-5xl px-4 py-8">
+        <div className="rounded-2xl bg-gradient-to-r from-emerald-800 to-emerald-600 p-6 text-white sm:p-8">
+          <p className="text-sm font-semibold text-emerald-100">আমার অ্যাকাউন্ট</p>
+          <h1 className="mt-2 text-3xl font-extrabold">স্বাগতম, {demoUser.name}!</h1>
+          <p className="mt-2 text-sm text-emerald-50">আপনার HaatBazar ড্যাশবোর্ডে স্বাগতম।</p>
+        </div>
+        <div className="mt-6 rounded-2xl border bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-bold">অ্যাকাউন্টের তথ্য</h2>
+          <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-sm text-slate-500">নাম</dt><dd className="mt-1 font-semibold">{demoUser.name}</dd></div>
+            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-sm text-slate-500">ইমেইল</dt><dd className="mt-1 break-all font-semibold">{demoUser.email}</dd></div>
+          </dl>
+        </div>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <Link href="/my-orders" className="rounded-2xl border bg-white p-5 shadow-sm transition hover:border-emerald-600"><span className="text-2xl">📦</span><h2 className="mt-2 font-bold">আমার অর্ডার</h2><p className="mt-1 text-sm text-slate-600">অর্ডার পেজ খুলুন।</p><span className="mt-3 inline-block font-semibold text-emerald-700">অর্ডার দেখুন →</span></Link>
+          <Link href="/" className="rounded-2xl border bg-white p-5 shadow-sm transition hover:border-emerald-600"><span className="text-2xl">🛍️</span><h2 className="mt-2 font-bold">কেনাকাটা চালিয়ে যান</h2><p className="mt-1 text-sm text-slate-600">হোমপেজে ফিরে পণ্য দেখুন।</p><span className="mt-3 inline-block font-semibold text-emerald-700">পণ্য দেখুন →</span></Link>
+        </div>
+        <p className="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-900">ডেমো অ্যাকাউন্ট: এই ড্যাশবোর্ডের তথ্য এই ব্রাউজারে সংরক্ষিত। এটি এখনো সার্ভার-ভিত্তিক বাস্তব ব্যবহারকারী অ্যাকাউন্ট বা অর্ডার ডেটাবেসের সঙ্গে যুক্ত নয়।</p>
+      </main>
+    </div>
+  );
+
   if (path === "/my-orders") return <MyOrders onBack={() => setLocation("/")} />;
   if (path === "/admin") return <AdminPanel onBack={() => setLocation("/")} />;
   if (path === "/admin/analytics") return <AdminAnalytics onBack={() => setLocation("/admin")} />;
@@ -128,6 +159,7 @@ export default function Home() {
             {demoUser ? (
               <>
                 <span className="hidden max-w-32 truncate text-sm font-semibold sm:inline">স্বাগতম, {demoUser.name}</span>
+                <Link href="/dashboard" className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800">ড্যাশবোর্ড</Link>
                 <button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setToast("ডেমো অ্যাকাউন্ট থেকে লগআউট হয়েছে।"); }} className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">লগআউট</button>
               </>
             ) : (
