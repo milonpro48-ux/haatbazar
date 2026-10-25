@@ -121,6 +121,30 @@ async function main() {
 
   const sellerOrders = await seller.call('seller_orders');
   assert.ok(sellerOrders.items.some(item => item.id === order.id), 'seller must see orders for their own listing');
+  assert.equal(sellerOrders.items.find(item => item.id === order.id).payment_status, 'unpaid', 'COD-style order must remain unpaid until collection');
+
+  const codCheckout = await buyer.call('checkout', {
+    method: 'POST', expect: 201,
+    body: {
+      items: [{ id: listing.id, quantity: 1 }], payment_method: 'cod',
+      buyer_name: 'Test Buyer', buyer_phone: '01812345678',
+      buyer_email: `buyer-${suffix}@example.test`, address: 'Test COD address, Dhaka'
+    }
+  });
+  assert.equal(codCheckout.payment_method, 'cod');
+  assert.equal(codCheckout.orders.length, 1);
+  const checkoutOrderId = codCheckout.orders[0].id;
+  const afterCodCheckout = await seller.call('seller_orders');
+  assert.equal(afterCodCheckout.items.find(item => item.id === checkoutOrderId).payment_status, 'unpaid', 'COD checkout must not mark payment as paid');
+
+  await buyer.call('checkout', {
+    method: 'POST', expect: 503,
+    body: {
+      items: [{ id: listing.id, quantity: 1 }], payment_method: 'sslcommerz',
+      buyer_name: 'Test Buyer', buyer_phone: '01812345678',
+      buyer_email: `buyer-${suffix}@example.test`, address: 'Test payment guard address, Dhaka'
+    }
+  });
 
   const seedAdmin = spawnSync('php', ['-r', `
     $c = require ${JSON.stringify(configPath)};
@@ -139,12 +163,32 @@ async function main() {
   assert.equal(adminLogin.user.role, 'admin');
   const adminOrders = await admin.call('admin_orders');
   assert.ok(adminOrders.items.some(item => item.id === order.id), 'admin must see the buyer order');
+  const statusUpdate = await admin.call('admin_order_status', {
+    method: 'POST', body: { order_id: order.id, status: 'confirmed', shipping_status: 'booked' }
+  });
+  assert.equal(statusUpdate.status, 'confirmed');
+  assert.equal(statusUpdate.shipping_status, 'booked');
+  const filteredOrders = await admin.call('admin_orders', { query: { status: 'confirmed', page: 1, limit: 10 } });
+  assert.ok(filteredOrders.items.some(item => item.id === order.id), 'admin status filter must include updated order');
+  const auditCount = spawnSync('php', ['-r', `
+    $c = require ${JSON.stringify(configPath)};
+    $p = new PDO($c['db_dsn'], $c['db_user'], $c['db_password'], [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+    $s = $p->prepare('SELECT COUNT(*) FROM order_status_audit WHERE order_id=?');
+    $s->execute([${JSON.stringify(order.id)}]);
+    echo (int)$s->fetchColumn();
+  `], { cwd: root, encoding: 'utf8' });
+  assert.equal(auditCount.status, 0, `audit query failed: ${auditCount.stderr}`);
+  assert.equal(auditCount.stdout.trim(), '1', 'admin order status changes must be audited');
 
   console.log('PASS seller-created product appears in public listing feed');
   console.log('PASS listing detail reads from the same MySQL database');
   console.log('PASS buyer order is created against the seller listing');
   console.log('PASS seller can see orders for their listing');
   console.log('PASS admin can see buyer order');
+  console.log('PASS COD checkout creates an unpaid order');
+  console.log('PASS online payment checkout remains disabled by default');
+  console.log('PASS admin can update shipping status and status filters');
+  console.log('PASS admin status updates are written to audit log');
 }
 
 try {
