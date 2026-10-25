@@ -6,14 +6,14 @@ import { money, bn, unitLabel } from "@/lib/data";
 const field = "w-full rounded-lg border bg-background px-3 py-2";
 
 export function OrderDialog({ item, onClose, onDone }: { item: Listing; onClose: () => void; onDone: (msg: string) => void }) {
-  const [qty, setQty] = useState(Math.max(1, item.minOrderQuantity || 1));
+  const [qty, setQty] = useState(1);
   const [busy, setBusy] = useState(false);
   const [needLogin, setNeedLogin] = useState(false);
   const [error, setError] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"later"|"bkash"|"nagad"|"rocket">("later");
   const [pendingPaymentOrderId, setPendingPaymentOrderId] = useState("");
-  const minQty = Math.max(1, item.minOrderQuantity || 1);
-  const q = Math.min(Math.max(minQty, qty || minQty), item.quantity);
+  const minQty = 1;
+  const q = Math.min(Math.max(1, qty || 1), item.quantity);
   const total = item.price * q;
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -59,7 +59,7 @@ export function OrderDialog({ item, onClose, onDone }: { item: Listing; onClose:
         </div>
         <div className="grid grid-cols-2 gap-2">
           <label className="text-sm text-muted-foreground">পরিমাণ (সর্বোচ্চ {bn(item.quantity)})
-            <input type="number" min={minQty} max={item.quantity} value={qty} onChange={(e) => setQty(Number(e.target.value))} className={field} />
+            <input type="number" min={1} max={item.quantity} value={qty} onChange={(e) => setQty(Number(e.target.value))} className={field} />
           </label>
           <div className="text-sm text-muted-foreground">মোট দাম
             <p className="pt-2 text-lg font-bold text-emerald-700 dark:text-emerald-400">{money(total)}</p>
