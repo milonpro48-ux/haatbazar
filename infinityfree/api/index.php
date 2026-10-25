@@ -86,7 +86,7 @@ try {
         requirePost();
         $u = needUser();
         if (!in_array(($u['role'] ?? ''), ['seller','admin'], true)) out(['error'=>'Seller account required'], 403);
-        $b = body();
+        $b = body(); csrf();
         $title = cleanString($b['title'] ?? '', 120);
         $category = cleanString($b['category'] ?? '', 80);
         $subcategory = cleanString($b['subcategory'] ?? '', 100);
@@ -137,7 +137,7 @@ try {
 
     if ($action === 'orders' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         requirePost();
-        $b = body();
+        $b = body(); csrf();
         $listingId = cleanString($b['listingId'] ?? '', 80);
         $quantity = filter_var($b['quantity'] ?? null, FILTER_VALIDATE_FLOAT);
         $buyerName = cleanString($b['buyerName'] ?? '', 100);
