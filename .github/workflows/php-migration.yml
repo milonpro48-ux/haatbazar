@@ -78,3 +78,13 @@ jobs:
             sleep 1
           done
           bash php-api/tests/smoke.sh
+      - name: Set up Node.js for API integration tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test PHP/MySQL registration, wholesale, orders, admin permissions and audit
+        env:
+          HAATBAZAR_TEST_DB_DSN: mysql:host=127.0.0.1;dbname=haatbazar_test;charset=utf8mb4
+          HAATBAZAR_TEST_DB_USER: root
+          HAATBAZAR_TEST_DB_PASSWORD: test-root-password
+        run: node php-api/tests/marketplace.mjs
