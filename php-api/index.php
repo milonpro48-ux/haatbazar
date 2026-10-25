@@ -180,6 +180,8 @@ try {
             $pdo->beginTransaction();
             try { $st=$pdo->prepare('SELECT status FROM orders WHERE id=? FOR UPDATE'); $st->execute([$id]); $o=$st->fetch(); if(!$o){$pdo->rollBack();hb_json(['error'=>'not_found'],404);}
                 $old=$o['status'];
+                if($old==='cancelled' && $status!=='cancelled') { $pdo->rollBack(); hb_json(['error'=>'cancelled_order_is_terminal'],422); }
+                if($status==='cancelled' && !in_array($old,['pending','confirmed','processing','cancelled'],true)) { $pdo->rollBack(); hb_json(['error'=>'order_cannot_be_cancelled'],422); }
                 if($status==='cancelled' && $old!=='cancelled') {
                     $restore=$pdo->prepare('SELECT listing_id,quantity FROM orders WHERE id=?'); $restore->execute([$id]); $line=$restore->fetch();
                     if($line) $pdo->prepare('UPDATE listings SET quantity=quantity+? WHERE id=?')->execute([(float)$line['quantity'],$line['listing_id']]);
