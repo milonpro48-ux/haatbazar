@@ -22,6 +22,7 @@ RewriteRule ^api/admin/product-delete/?$ api/index.php?action=admin_product_dele
 RewriteRule ^api/admin/order-status/?$ api/index.php?action=admin_order_status [QSA,L]
 RewriteRule ^api/admin/ship-order/?$ api/index.php?action=admin_ship_order [QSA,L]
 RewriteRule ^api/seller/orders/?$ api/index.php?action=seller_orders [QSA,L]
+RewriteRule ^api/my-orders/?$ api/index.php?action=my_orders [QSA,L]
 
 # Do not serve the React app for unknown API routes.
 RewriteRule ^api/ - [L]
