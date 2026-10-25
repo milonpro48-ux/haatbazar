@@ -82,8 +82,7 @@ async function main() {
   await startServer();
   const suffix = Date.now().toString();
   const seller = sessionClient();
-  let initial = await seller.call('csrf');
-  seller.csrf = initial.csrf;
+  await seller.call('csrf');
   const sellerAccount = await seller.call('register', {
     method: 'POST', expect: 201,
     body: { name: 'Test Seller', email: `seller-${suffix}@example.test`, phone: '01712345678', password: 'TestSellerPassword123!', role: 'seller' }
@@ -108,8 +107,7 @@ async function main() {
   assert.equal(detail.id, listing.id);
 
   const buyer = sessionClient();
-  const buyerCsrf = await buyer.call('csrf');
-  buyer.csrf = buyerCsrf.csrf;
+  await buyer.call('csrf');
   const buyerAccount = await buyer.call('register', {
     method: 'POST', expect: 201,
     body: { name: 'Test Buyer', email: `buyer-${suffix}@example.test`, phone: '01812345678', password: 'TestBuyerPassword123!', role: 'buyer' }
@@ -133,8 +131,7 @@ async function main() {
   assert.equal(seedAdmin.status, 0, `admin seed failed: ${seedAdmin.stderr}`);
 
   const admin = sessionClient();
-  const adminCsrf = await admin.call('csrf');
-  admin.csrf = adminCsrf.csrf;
+  await admin.call('csrf');
   const adminLogin = await admin.call('login', {
     method: 'POST',
     body: { email: `admin-${suffix}@example.test`, password: 'TestAdminPassword123!' }
