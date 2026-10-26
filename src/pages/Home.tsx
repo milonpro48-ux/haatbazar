@@ -13,6 +13,7 @@ import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { PostAdDialog } from "@/components/PostAdDialog";
 import { OrderDialog } from "@/components/OrderDialog";
 import { AuthDialog, readDemoSession, type DemoUser } from "@/components/AuthDialog";
+import { getSiteSettings, type SiteSettings } from "@/lib/siteSettings";
 
 const whatsappNumber = (import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
 
@@ -93,6 +94,8 @@ function AdminDemoDashboard({ onBack }: { onBack: () => void }) {
 export default function Home() {
   const [location, setLocation] = useLocation();
   const path = location.split("?")[0];
+  const [brandSettings, setBrandSettings] = useState<SiteSettings>(() => getSiteSettings());
+  useEffect(() => { setBrandSettings(getSiteSettings()); }, [path]);
   const categorySlug = path.startsWith("/category/") ? path.split("/")[2] : "";
   const districtSlug = path.startsWith("/district/") ? path.split("/")[2] : "";
   const routeCategory = CATEGORIES.find(c => c.slug === categorySlug);
@@ -134,7 +137,7 @@ export default function Home() {
     const pseo = product ? productSeo(product.title, labelOf(product.category), product.district, product.price) : null;
     const title = pseo?.title || (routeCategory ? `${routeCategory.label} কিনুন ও বিক্রি করুন | হাটবাজার` : routeDistrict ? `${routeDistrict} জেলার পণ্য কেনাবেচা | হাটবাজার` : "হাটবাজার | বাংলাদেশের খুচরা ও পাইকারি মার্কেটপ্লেস");
     const description = pseo?.description || (routeCategory ? `${routeCategory.label} খুচরা ও পাইকারি দামে খুঁজুন। বাংলাদেশজুড়ে বিক্রেতা, দাম ও সরাসরি যোগাযোগ—হাটবাজারে।` : routeDistrict ? `${routeDistrict} জেলার পণ্য, দোকান ও পাইকারি সরবরাহকারী খুঁজুন হাটবাজারে।` : "বাংলাদেশের খুচরা ও পাইকারি অনলাইন মার্কেটপ্লেস। ইলেকট্রনিক্স, পোশাক, মুদি, কৃষি, যন্ত্রপাতি ও সেবা খুঁজুন।");
-    document.title = title;
+    document.title = `${brandSettings.siteName} | ${title}`;
     let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
     if (!meta) { meta = document.createElement("meta"); meta.name = "description"; document.head.appendChild(meta); }
     meta.content = description;
@@ -194,7 +197,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4">
           <div className="flex min-w-0 items-center gap-3">
             <Link href="/" aria-label="মার্কেটপ্লেসে ফিরে যান" title="মার্কেটপ্লেসে ফিরে যান" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400">←</Link>
-            <Link href="/" className="text-xl font-extrabold tracking-tight text-white">হাট<span className="text-orange-400">বাজার</span><span className="ml-2 text-xs font-medium text-emerald-300">HaatBazar</span></Link>
+            <Link href="/" className="text-xl font-extrabold tracking-tight text-white">{brandSettings.siteName}<span className="ml-2 text-xs font-medium text-emerald-300">হাটবাজার</span></Link>
           </div>
           <div className="flex items-center gap-2"><span className="hidden text-sm text-slate-300 sm:inline">{demoUser.name}</span><button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setLocation("/"); }} className="rounded-xl border border-white/15 px-3 py-2 text-sm font-semibold hover:bg-white/10">লগআউট</button></div>
         </div>
