@@ -92,7 +92,9 @@ function AdminDemoDashboard({ onBack }: { onBack: () => void }) {
 
 export default function Home() {
   const [location, setLocation] = useLocation();
-  const path = location.split("?")[0];
+  const routeQuery = location.includes("?") ? location.slice(location.indexOf("?") + 1) : "";
+  const routedPath = new URLSearchParams(routeQuery).get("p");
+  const path = (routedPath || location.split("?")[0]).split("?")[0];
   const [brandSettings, setBrandSettings] = useState<SiteSettings>(() => getSiteSettings());
   useEffect(() => { setBrandSettings(getSiteSettings()); }, [path]);
   const displayCategories = brandSettings.categories.filter(c => c.enabled).map(c => { const base = CATEGORIES.find(x => x.key === c.id || x.slug === c.slug); return base ? { ...base, label: c.label, emoji: c.emoji, slug: c.slug } : { key: c.id, slug: c.slug, label: c.label, emoji: c.emoji, subcategories: [] as string[], keywords: [] as string[] }; });
