@@ -338,13 +338,13 @@ export default function Home() {
         </section>
         <h2 id="why" className="mb-3 mt-10 border-l-4 border-orange-500 pl-3 text-xl font-extrabold">{brandSettings.whyTitle}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {why.map((w) => (
-            <div key={w.title} className="rounded-2xl border bg-card p-4">
-              <w.icon className="mb-2 text-emerald-600" />
+          {brandSettings.whyItems.filter(w => w.enabled).map((w) => { const Icon = whyIcons[w.icon as keyof typeof whyIcons] || Store; return (
+            <div key={w.id} className="rounded-2xl border bg-card p-4">
+              <Icon className="mb-2 text-emerald-600" aria-hidden="true" />
               <h3 className="font-semibold">{w.title}</h3>
               <p className="text-sm text-muted-foreground">{w.body}</p>
             </div>
-          ))}
+          ); })}
         </div>
       </main>
 
