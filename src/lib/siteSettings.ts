@@ -3,7 +3,7 @@ export type OrderFieldKey = "name" | "phone" | "email" | "address";
 export type WhyItem = { id: string; icon: string; title: string; body: string; enabled: boolean };
 export type FooterLink = { id: string; label: string; href: string; enabled: boolean };
 export type FooterLinkGroup = { id: string; links: FooterLink[] };
-export type EditableCategory = { id: string; label: string; emoji: string; slug: string; enabled: boolean };
+export type EditableCategory = { id: string; label: string; emoji: string; slug: string; enabled: boolean; subcategories: string[] };
 export type SiteSettings = {
   headerPromo: string;
   headerNavToday: string;
@@ -81,19 +81,19 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     ]}
   ],
   categories: [
-    {id:"electronics",label:"ইলেকট্রিক ও গেজেট",emoji:"📱",slug:"electronics-gadgets",enabled:true},
-    {id:"fashion",label:"পোশাক, জুতা ও ফ্যাশন",emoji:"👕",slug:"clothing-shoes-fashion",enabled:true},
-    {id:"home-kitchen",label:"ঘর, রান্নাঘর ও আসবাবপত্র",emoji:"🪑",slug:"home-kitchen-furniture",enabled:true},
-    {id:"grocery",label:"খাবার, মুদি ও দৈনন্দিন পণ্য",emoji:"🛒",slug:"food-grocery-daily-essentials",enabled:true},
-    {id:"agriculture",label:"কৃষি পণ্য ও শস্য",emoji:"🌾",slug:"agriculture-crops-grains",enabled:true},
-    {id:"livestock-poultry-fish",label:"গবাদিপশু, পোল্ট্রি ও মাছ",emoji:"🐄",slug:"livestock-poultry-fish",enabled:true},
-    {id:"machinery",label:"যন্ত্রপাতি ও সরঞ্জাম",emoji:"⚙️",slug:"machinery-tools",enabled:true},
-    {id:"vehicles",label:"গাড়ি, মোটরসাইকেল ও যন্ত্রাংশ",emoji:"🏍️",slug:"cars-motorcycles-parts",enabled:true},
-    {id:"construction",label:"নির্মাণ সামগ্রী ও হার্ডওয়্যার",emoji:"🧱",slug:"construction-materials-hardware",enabled:true},
-    {id:"beauty",label:"সৌন্দর্য ও ব্যক্তিগত পরিচর্যা",emoji:"🧴",slug:"beauty-personal-care",enabled:true},
-    {id:"books-office",label:"বই, স্টেশনারি ও অফিস সামগ্রী",emoji:"📚",slug:"books-stationery-office",enabled:true},
-    {id:"services-rentals",label:"সেবা ও ভাড়ার সুবিধা",emoji:"🛠️",slug:"services-rentals",enabled:true},
-    {id:"bogra-doi-mishti",label:"বগুড়ার দই-মিষ্টি",emoji:"🍮",slug:"bogra-doi-mishti",enabled:true}
+    {id:"electronics",label:"ইলেকট্রিক ও গেজেট",emoji:"📱",slug:"electronics-gadgets",enabled:true,subcategories:["মোবাইল ফোন","কম্পিউটার ও ল্যাপটপ","টিভি ও অডিও","ক্যামেরা","চার্জার ও কেবল","অন্যান্য গ্যাজেট"]},
+    {id:"fashion",label:"পোশাক, জুতা ও ফ্যাশন",emoji:"👕",slug:"clothing-shoes-fashion",enabled:true,subcategories:["পুরুষদের পোশাক","নারীদের পোশাক","শিশুদের পোশাক","জুতা ও স্যান্ডেল","ব্যাগ ও ঘড়ি","কাপড় ও থ্রি-পিস"]},
+    {id:"home-kitchen",label:"ঘর, রান্নাঘর ও আসবাবপত্র",emoji:"🪑",slug:"home-kitchen-furniture",enabled:true,subcategories:["আসবাবপত্র","রান্নাঘরের সরঞ্জাম","বিছানা ও বালিশ","ঘর সাজানোর সামগ্রী","লাইট ও ফ্যান","অন্যান্য"]},
+    {id:"grocery",label:"খাবার, মুদি ও দৈনন্দিন পণ্য",emoji:"🛒",slug:"food-grocery-daily-essentials",enabled:true,subcategories:["চাল ও ডাল","তেল ও মসলা","ফল ও সবজি","মাছ ও মাংস","দুধ ও দুগ্ধজাত","বগুড়ার দই-মিষ্টি"]},
+    {id:"agriculture",label:"কৃষি পণ্য ও শস্য",emoji:"🌾",slug:"agriculture-crops-grains",enabled:true,subcategories:["ধান ও চাল","বীজ","সার","কীটনাশক","কৃষি যন্ত্রপাতি","ফসল ও শস্য"]},
+    {id:"livestock-poultry-fish",label:"গবাদিপশু, পোল্ট্রি ও মাছ",emoji:"🐄",slug:"livestock-poultry-fish",enabled:true,subcategories:["গরু ও মহিষ","ছাগল ও ভেড়া","মুরগি ও হাঁস","মাছ ও পোনা","পশুখাদ্য","পশুপালন সরঞ্জাম"]},
+    {id:"machinery",label:"যন্ত্রপাতি ও সরঞ্জাম",emoji:"⚙️",slug:"machinery-tools",enabled:true,subcategories:["কৃষি যন্ত্রপাতি","শিল্প যন্ত্রপাতি","হাতের সরঞ্জাম","পাম্প ও মোটর","জেনারেটর","খুচরা যন্ত্রাংশ"]},
+    {id:"vehicles",label:"গাড়ি, মোটরসাইকেল ও যন্ত্রাংশ",emoji:"🏍️",slug:"cars-motorcycles-parts",enabled:true,subcategories:["মোটরসাইকেল","প্রাইভেট কার","সাইকেল","গাড়ির যন্ত্রাংশ","টায়ার ও ব্যাটারি","বাণিজ্যিক যানবাহন"]},
+    {id:"construction",label:"নির্মাণ সামগ্রী ও হার্ডওয়্যার",emoji:"🧱",slug:"construction-materials-hardware",enabled:true,subcategories:["সিমেন্ট ও রড","ইট ও বালু","রং ও রাসায়নিক","পাইপ ও ফিটিংস","ইলেকট্রিক সামগ্রী","হার্ডওয়্যার"]},
+    {id:"beauty",label:"সৌন্দর্য ও ব্যক্তিগত পরিচর্যা",emoji:"🧴",slug:"beauty-personal-care",enabled:true,subcategories:["ত্বকের যত্ন","চুলের যত্ন","মেকআপ","পারফিউম","ব্যক্তিগত পরিচর্যা","সেলুন সামগ্রী"]},
+    {id:"books-office",label:"বই, স্টেশনারি ও অফিস সামগ্রী",emoji:"📚",slug:"books-stationery-office",enabled:true,subcategories:["স্কুলের বই","উপন্যাস ও গল্প","খাতা ও কলম","অফিস সরঞ্জাম","প্রিন্টার ও কালি","শিক্ষা উপকরণ"]},
+    {id:"services-rentals",label:"সেবা ও ভাড়ার সুবিধা",emoji:"🛠️",slug:"services-rentals",enabled:true,subcategories:["বাসা ও দোকান ভাড়া","যন্ত্রপাতি ভাড়া","পরিবহন সেবা","মেরামত সেবা","ডিজিটাল সেবা","অন্যান্য সেবা"]},
+    {id:"bogra-doi-mishti",label:"বগুড়ার দই-মিষ্টি",emoji:"🍮",slug:"bogra-doi-mishti",enabled:true,subcategories:["বগুড়ার দই","মিষ্টি","রসমালাই","ঘি","দই-মিষ্টির পাইকারি","উপহার প্যাক"]}
   ],
   siteName: "HaatBazar",
   tagline: "আপনার এলাকার হাটকেনা-বেচা সহজসারা বাংলাদেশ",
@@ -115,7 +115,7 @@ export function getSiteSettings(): SiteSettings {
     const saved = JSON.parse(raw) as Partial<SiteSettings>;
     return {
       ...DEFAULT_SITE_SETTINGS, ...saved,
-      categories: Array.isArray(saved.categories) ? saved.categories : DEFAULT_SITE_SETTINGS.categories,
+      categories: Array.isArray(saved.categories) ? saved.categories.map((category) => ({ ...category, subcategories: Array.isArray(category.subcategories) ? category.subcategories : (DEFAULT_SITE_SETTINGS.categories.find((item) => item.id === category.id)?.subcategories ?? []) })) : DEFAULT_SITE_SETTINGS.categories,
       whyItems: Array.isArray(saved.whyItems) ? saved.whyItems : DEFAULT_SITE_SETTINGS.whyItems,
       footerBadges: Array.isArray(saved.footerBadges) ? saved.footerBadges : DEFAULT_SITE_SETTINGS.footerBadges,
       footerLinks: Array.isArray(saved.footerLinks) ? saved.footerLinks : DEFAULT_SITE_SETTINGS.footerLinks,
