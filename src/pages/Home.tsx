@@ -17,12 +17,10 @@ import { getSiteSettings, type SiteSettings } from "@/lib/siteSettings";
 
 const whatsappNumber = (import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
 
-const why = [
-  { icon: Store, title: "চেনা মুখ, চেনা স্বাদ", body: "বিক্রেতার নাম, এলাকা ও ফোন নম্বর সব খোলা।" },
-  { icon: Leaf, title: "টাটকা মানে সত্যিই টাটকা", body: "সরাসরি কৃষকের কাছ থেকে, স্টকে বসে থাকা মাল নয়।" },
-  { icon: BadgeCheck, title: "দামে লুকোচুরি নেই", body: "যা দেখছেন সেটাই দাম, দরদাম সরাসরি বিক্রেতার সাথে।" },
-  { icon: Truck, title: "কাছের বিক্রেতা", body: "জেলা ধরে খুঁজে নিজের এলাকার বিক্রেতা পান।" },
-];
+const whyIcons = { store: Store, leaf: Leaf, "badge-check": BadgeCheck, truck: Truck } as const;
+function footerHref(href: string) {
+  return href.startsWith("/") || href.startsWith("https://") || href.startsWith("http://") ? href : "/contact";
+}
 
 function slugifyBn(value: string) { return DISTRICT_SLUGS[value] || value.toLowerCase().replace(/\s+/g, "-"); }
 
@@ -338,7 +336,7 @@ export default function Home() {
             <p className="mt-2 text-xs text-muted-foreground">তালিকায় একসঙ্গে প্রায় ৫টি জেলা দেখুন; স্ক্রল করে বাকি জেলা বেছে নিন।</p>
           </details>
         </section>
-        <h2 id="why" className="mb-3 mt-10 border-l-4 border-orange-500 pl-3 text-xl font-extrabold">কেন হাটবাজার?</h2>
+        <h2 id="why" className="mb-3 mt-10 border-l-4 border-orange-500 pl-3 text-xl font-extrabold">{brandSettings.whyTitle}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {why.map((w) => (
             <div key={w.title} className="rounded-2xl border bg-card p-4">
@@ -355,46 +353,36 @@ export default function Home() {
           <section>
             <h3 className="mb-3 text-base font-semibold text-emerald-800">{brandSettings.footerSupportTitle}</h3>
             <nav className="flex flex-col items-start gap-2 text-sm">
-              <a href="/contact" className="hover:text-orange-600">সহায়তা কেন্দ্র</a>
-              <a href="/about" className="hover:text-orange-600">কীভাবে কিনবেন</a>
-              <a href="/refund-policy" className="hover:text-orange-600">রিফান্ড ও ফেরত নীতি</a>
-              <a href="/delivery-policy" className="hover:text-orange-600">ডেলিভারি তথ্য</a>
-              <a href="/terms" className="hover:text-orange-600">শর্তাবলি</a>
+              {brandSettings.footerLinks.find(g => g.id === "support")?.links.filter(link => link.enabled).map(link => <a key={link.id} href={footerHref(link.href)} className="hover:text-orange-600">{link.label}</a>)}
             </nav>
           </section>
           <section>
             <h3 className="mb-3 text-base font-semibold text-emerald-800">{brandSettings.footerMarketplaceTitle}</h3>
             <nav className="flex flex-col items-start gap-2 text-sm">
-              <a href="/about" className="hover:text-orange-600">আমাদের সম্পর্কে</a>
-              <a href="/contact" className="hover:text-orange-600">যোগাযোগ করুন</a>
-              <a href="/privacy" className="hover:text-orange-600">গোপনীয়তা নীতি</a>
-              <a href="/terms" className="hover:text-orange-600">ব্যবহারের শর্ত</a>
-              <a href="/#popular" className="hover:text-orange-600">জনপ্রিয় ক্যাটাগরি</a>
+              {brandSettings.footerLinks.find(g => g.id === "marketplace")?.links.filter(link => link.enabled).map(link => <a key={link.id} href={footerHref(link.href)} className="hover:text-orange-600">{link.label}</a>)}
             </nav>
           </section>
           <section>
             <h3 className="mb-3 text-base font-semibold text-emerald-800">{brandSettings.footerSellerTitle}</h3>
             <nav className="flex flex-col items-start gap-2 text-sm">
-              <a href="/#products" className="hover:text-orange-600">পণ্য দেখুন</a>
-              <button type="button" onClick={() => setPosting(true)} className="hover:text-orange-600">পণ্য বিক্রির বিজ্ঞাপন দিন</button>
-              <a href="/contact" className="hover:text-orange-600">বিক্রেতার সহায়তা</a>
+              {brandSettings.footerLinks.find(g => g.id === "seller")?.links.filter(link => link.enabled).map(link => link.href === "action:post-ad" ? <button key={link.id} type="button" onClick={() => setPosting(true)} className="hover:text-orange-600">{link.label}</button> : <a key={link.id} href={footerHref(link.href)} className="hover:text-orange-600">{link.label}</a>)}
             </nav>
             <div className="mt-5 rounded-xl border border-emerald-100 bg-white p-3">
-              <p className="font-semibold text-emerald-800">হাটবাজারে কেনাকাটা করুন</p>
+              <p className="font-semibold text-emerald-800">{brandSettings.footerShopTitle}</p>
               <p className="mt-1 text-xs text-slate-500">{brandSettings.footerDescription}</p>
             </div>
           </section>
           <section>
             <h3 className="mb-3 text-base font-semibold text-emerald-800">{brandSettings.footerContactTitle}</h3>
-            <p className="text-sm">প্রশ্ন বা সহায়তার জন্য যোগাযোগ পেজে যান।</p>
+            <p className="text-sm">{brandSettings.footerContactText}</p>
             <a href="/contact" className="mt-3 inline-flex rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600">যোগাযোগ করুন</a>
           </section>
         </div>
         <div className="border-t border-slate-200 bg-white">
           <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-semibold">পেমেন্ট ও অর্ডার</p>
-              <p className="mt-1 text-sm text-slate-500">অর্ডার দেওয়ার আগে বিক্রেতার সঙ্গে পণ্যের দাম ও ডেলিভারি নিশ্চিত করুন।</p>
+              <p className="font-semibold">{brandSettings.footerOrderTitle}</p>
+              <p className="mt-1 text-sm text-slate-500">{brandSettings.footerOrderNotice}</p>
             </div>
             <div className="flex flex-wrap gap-2 text-xs font-semibold">
               <span className="rounded border bg-slate-50 px-3 py-2">সরাসরি বিক্রেতার সঙ্গে যোগাযোগ</span>
@@ -404,7 +392,7 @@ export default function Home() {
           </div>
           <div className="border-t border-slate-200">
             <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-              <span>© ২০২৬ হাটবাজার · বাংলাদেশের অনলাইন কেনাবেচার বাজার</span>
+              <span>{brandSettings.footerCopyright}</span>
               <nav className="flex flex-wrap gap-x-4 gap-y-2"><a href="/terms" className="hover:text-emerald-700">শর্তাবলি</a><a href="/privacy" className="hover:text-emerald-700">গোপনীয়তা</a><a href="/refund-policy" className="hover:text-emerald-700">রিফান্ড নীতি</a></nav>
             </div>
           </div>
