@@ -193,7 +193,7 @@ export default function SuperAdminDashboard({ onBack }: Props) {
     </section>
     <div className="flex flex-wrap gap-3"><button type="submit" disabled={!Object.values(siteSettings.paymentMethods).some(Boolean)} className="rounded-lg bg-violet-600 px-5 py-3 text-sm font-bold text-white hover:bg-violet-500 disabled:opacity-50">Save Changes · সেটিংস সংরক্ষণ</button><button type="button" onClick={()=>{setSiteSettings(getSiteSettings());action("সংরক্ষিত ডেমো সেটিংস আবার লোড হয়েছে।");}} className="rounded-lg border border-slate-600 px-4 py-3 text-sm">সংরক্ষিত মান ফিরিয়ে আনুন</button></div>
   </form>
-</div>}</section>}
+</div>}
         </div>
       </main>
     </div>
