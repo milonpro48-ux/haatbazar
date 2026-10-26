@@ -48,7 +48,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     {id:"books-office",label:"বই, স্টেশনারি ও অফিস সামগ্রী",emoji:"📚",slug:"books-stationery-office",enabled:true},
     {id:"services-rentals",label:"সেবা ও ভাড়ার সুবিধা",emoji:"🛠️",slug:"services-rentals",enabled:true},
     {id:"bogra-doi-mishti",label:"বগুড়ার দই-মিষ্টি",emoji:"🍮",slug:"bogra-doi-mishti",enabled:true}
-  ]
+  ],
   siteName: "HaatBazar",
   tagline: "আপনার এলাকার হাটকেনা-বেচা সহজসারা বাংলাদেশ",
   retailCommission: 5,
