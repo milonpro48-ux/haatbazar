@@ -40,9 +40,15 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     {id:"home-kitchen",label:"ঘর, রান্নাঘর ও আসবাবপত্র",emoji:"🪑",slug:"home-kitchen-furniture",enabled:true},
     {id:"grocery",label:"খাবার, মুদি ও দৈনন্দিন পণ্য",emoji:"🛒",slug:"food-grocery-daily-essentials",enabled:true},
     {id:"agriculture",label:"কৃষি পণ্য ও শস্য",emoji:"🌾",slug:"agriculture-crops-grains",enabled:true},
-    {id:"livestock",label:"গবাদিপশু, পোল্ট্রি ও মাছ",emoji:"🐄",slug:"livestock-poultry-fish",enabled:true},
-    {id:"bogura-sweets",label:"বগুড়ার দই-মিষ্টি",emoji:"🍮",slug:"bogura-doi-mishti",enabled:true}
-  ],
+    {id:"livestock-poultry-fish",label:"গবাদিপশু, পোল্ট্রি ও মাছ",emoji:"🐄",slug:"livestock-poultry-fish",enabled:true},
+    {id:"machinery",label:"যন্ত্রপাতি ও সরঞ্জাম",emoji:"⚙️",slug:"machinery-tools",enabled:true},
+    {id:"vehicles",label:"গাড়ি, মোটরসাইকেল ও যন্ত্রাংশ",emoji:"🏍️",slug:"cars-motorcycles-parts",enabled:true},
+    {id:"construction",label:"নির্মাণ সামগ্রী ও হার্ডওয়্যার",emoji:"🧱",slug:"construction-materials-hardware",enabled:true},
+    {id:"beauty",label:"সৌন্দর্য ও ব্যক্তিগত পরিচর্যা",emoji:"🧴",slug:"beauty-personal-care",enabled:true},
+    {id:"books-office",label:"বই, স্টেশনারি ও অফিস সামগ্রী",emoji:"📚",slug:"books-stationery-office",enabled:true},
+    {id:"services-rentals",label:"সেবা ও ভাড়ার সুবিধা",emoji:"🛠️",slug:"services-rentals",enabled:true},
+    {id:"bogra-doi-mishti",label:"বগুড়ার দই-মিষ্টি",emoji:"🍮",slug:"bogra-doi-mishti",enabled:true}
+  ]
   siteName: "HaatBazar",
   tagline: "আপনার এলাকার হাটকেনা-বেচা সহজসারা বাংলাদেশ",
   retailCommission: 5,
