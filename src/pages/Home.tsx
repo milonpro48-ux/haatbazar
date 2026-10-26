@@ -10,6 +10,7 @@ import AdminPanel from "@/pages/AdminPanel";
 import SuperAdminDashboard from "@/pages/SuperAdminDashboard";
 import SuperAdminLogin from "@/pages/SuperAdminLogin";
 import MyOrders from "@/pages/MyOrders";
+import CustomerProfile from "@/pages/CustomerProfile";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { PostAdDialog } from "@/components/PostAdDialog";
 import { OrderDialog } from "@/components/OrderDialog";
@@ -237,6 +238,7 @@ export default function Home() {
     </div>
   );
 
+  if (path === "/profile") return demoUser ? <CustomerProfile /> : <div className="mx-auto max-w-xl p-8 text-center"><h1 className="text-xl font-bold">প্রোফাইল দেখতে লগইন করুন</h1><p className="my-3 text-sm text-muted-foreground">আপনার অ্যাকাউন্টে প্রবেশ করে প্রোফাইল খুলুন।</p><button onClick={() => { setAuthMode("login"); setLocation("/"); }} className="rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white">লগইন</button></div>;
   if (path === "/my-orders") return <MyOrders onBack={() => setLocation("/")} />;
   if (path === "/admin/login" && import.meta.env.VITE_DEMO_MODE === "true") return <SuperAdminLogin />;
   if (path === "/admin" && import.meta.env.VITE_DEMO_MODE === "true") {
@@ -259,6 +261,7 @@ export default function Home() {
               <>
                 <span className="hidden max-w-32 truncate text-sm font-semibold sm:inline">স্বাগতম, {demoUser.name}</span>
                 <Link href="/dashboard" className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800">ড্যাশবোর্ড</Link>
+                <Link href="/profile" className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">প্রোফাইল</Link>
                 <button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setToast("ডেমো অ্যাকাউন্ট থেকে লগআউট হয়েছে।"); }} className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">লগআউট</button>
               </>
             ) : (
