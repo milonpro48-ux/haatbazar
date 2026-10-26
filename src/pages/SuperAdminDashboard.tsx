@@ -47,6 +47,15 @@ export default function SuperAdminDashboard({ onBack }: Props) {
   const [applications, setApplications] = useState(initialApplications);
   const [categoryState, setCategoryState] = useState<Record<string, boolean>>(Object.fromEntries(categories.map(c => [c.id, c.enabled])));
   const [notice, setNotice] = useState("");
+  const [adminProfile, setAdminProfile] = useState<{ name: string; email: string; phone: string }>(() => {
+    try {
+      const saved = localStorage.getItem("haatbazar-admin-profile");
+      return saved ? { name: "MSA Milon Miah", email: "milonmiah9002@gmail.com", phone: "+8801755264490", ...JSON.parse(saved) } : { name: "MSA Milon Miah", email: "milonmiah9002@gmail.com", phone: "+8801755264490" };
+    } catch { return { name: "MSA Milon Miah", email: "milonmiah9002@gmail.com", phone: "+8801755264490" }; }
+  });
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [userStatus, setUserStatus] = useState<Record<string, boolean>>({});
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => getSiteSettings());
   const [workspace, setWorkspace] = useState<AdminWorkspace>(() => getAdminWorkspace());
@@ -110,6 +119,34 @@ export default function SuperAdminDashboard({ onBack }: Props) {
 </section>}
 {active==="settings"&&<div className="mt-5 space-y-5">
   <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100"><b>ডেমো সেটিংস:</b> Save করলে এই ব্রাউজারের local storage-এ থাকবে এবং ডেমো Order Dialog-এ ব্যবহার হবে। GitHub Pages static হওয়ায় এটি MySQL/সব ব্যবহারকারীর ডেটাবেসে সংরক্ষণ করে না; লাইভ সাইটে কোনো প্রভাব নেই।</div>
+  <section className="rounded-xl border border-slate-700 bg-[#0d1522] p-4 sm:p-5">
+    <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-bold text-teal-200">Super Admin প্রোফাইল</h3><p className="mt-1 text-xs text-slate-400">আপনার অ্যাকাউন্টের পরিচিতি তথ্য। ডেমোতে এই ব্রাউজারে সংরক্ষিত হবে।</p></div><span className="rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1 text-xs text-teal-200">MSA Admin</span></div>
+    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      <label className="grid gap-1.5 text-sm text-slate-300">নাম<input value={adminProfile.name} onChange={e=>setAdminProfile(p=>({...p,name:e.target.value}))} maxLength={100} required className="rounded-lg border border-slate-700 bg-[#151f2e] px-3 py-2.5 text-white"/></label>
+      <label className="grid gap-1.5 text-sm text-slate-300">ইমেইল<input type="email" value={adminProfile.email} onChange={e=>setAdminProfile(p=>({...p,email:e.target.value}))} maxLength={160} required className="rounded-lg border border-slate-700 bg-[#151f2e] px-3 py-2.5 text-white"/></label>
+      <label className="grid gap-1.5 text-sm text-slate-300">ফোন নম্বর<input type="tel" value={adminProfile.phone} onChange={e=>setAdminProfile(p=>({...p,phone:e.target.value}))} maxLength={24} required className="rounded-lg border border-slate-700 bg-[#151f2e] px-3 py-2.5 text-white"/></label>
+    </div>
+    <button type="button" onClick={()=>{localStorage.setItem("haatbazar-admin-profile",JSON.stringify(adminProfile));action("প্রোফাইল তথ্য এই ব্রাউজারে সংরক্ষিত হয়েছে (ডেমো)।");}} className="mt-4 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-teal-600">প্রোফাইল সংরক্ষণ</button>
+  </section>
+  <section className="rounded-xl border border-slate-700 bg-[#0d1522] p-4 sm:p-5">
+    <h3 className="font-bold text-teal-200">পাসওয়ার্ড পরিবর্তন</h3>
+    <p className="mt-1 text-xs leading-5 text-slate-400">বর্তমান পাসওয়ার্ড যাচাই, নিরাপদ হ্যাশিং এবং বাস্তব লগইন আপডেট করতে সার্ভার-সাইড অথেনটিকেশন সংযোগ প্রয়োজন। এই GitHub Pages ডেমোতে পাসওয়ার্ড সংরক্ষণ বা পরিবর্তন করা হবে না।</p>
+    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      <label className="grid gap-1.5 text-sm text-slate-300">বর্তমান পাসওয়ার্ড<input type="password" autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)} className="rounded-lg border border-slate-700 bg-[#151f2e] px-3 py-2.5 text-white" placeholder="বর্তমান পাসওয়ার্ড"/></label>
+      <label className="grid gap-1.5 text-sm text-slate-300">নতুন পাসওয়ার্ড<input type="password" autoComplete="new-password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} minLength={12} className="rounded-lg border border-slate-700 bg-[#151f2e] px-3 py-2.5 text-white" placeholder="কমপক্ষে ১২ অক্ষর"/></label>
+      <label className="grid gap-1.5 text-sm text-slate-300">নতুন পাসওয়ার্ড নিশ্চিত করুন<input type="password" autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} minLength={12} className="rounded-lg border border-slate-700 bg-[#151f2e] px-3 py-2.5 text-white" placeholder="আবার লিখুন"/></label>
+    </div>
+    {newPassword && newPassword.length < 12 && <p className="mt-3 text-xs text-amber-300">নিরাপত্তার জন্য অন্তত ১২ অক্ষরের পাসওয়ার্ড ব্যবহার করুন।</p>}
+    {confirmPassword && newPassword !== confirmPassword && <p className="mt-2 text-xs text-rose-300">দুটি নতুন পাসওয়ার্ড মিলছে না।</p>}
+    <button type="button" onClick={()=>{if(!currentPassword||!newPassword||!confirmPassword){action("সব পাসওয়ার্ড ফিল্ড পূরণ করুন।");return;}if(newPassword.length<12){action("নতুন পাসওয়ার্ড অন্তত ১২ অক্ষরের হতে হবে।");return;}if(newPassword!==confirmPassword){action("নতুন পাসওয়ার্ড দুটি মিলছে না।");return;}action("ফর্ম যাচাই হয়েছে, কিন্তু ডেমোতে পাসওয়ার্ড বদলানো হয়নি। বাস্তব পরিবর্তনের জন্য সার্ভার সংযোগ দরকার।");setCurrentPassword("");setNewPassword("");setConfirmPassword("");}} className="mt-4 rounded-lg border border-teal-500/40 bg-teal-500/10 px-4 py-2.5 text-sm font-bold text-teal-200 hover:bg-teal-500/20">পাসওয়ার্ড পরিবর্তনের অনুরোধ যাচাই</button>
+  </section>
+  <section className="rounded-xl border border-slate-700 bg-[#0d1522] p-4 sm:p-5">
+    <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-bold text-teal-200">ভবিষ্যতের অ্যাকাউন্ট নিরাপত্তা</h3><p className="mt-1 text-xs text-slate-400">SMS OTP, ফোন যাচাই ও পাসওয়ার্ড রিকভারি অপশন রাখা হয়েছে; এখন বন্ধ থাকবে। পরে ব্যাকএন্ড ও SMS গেটওয়ে যুক্ত করে চালু করা যাবে।</p></div><span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs text-amber-200">বন্ধ আছে</span></div>
+    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      {[{title:"SMS OTP",desc:"লগইন/নিরাপত্তা কোড"},{title:"ফোন নম্বর যাচাই",desc:"মোবাইল নম্বর নিশ্চিতকরণ"},{title:"পাসওয়ার্ড রিকভারি",desc:"ভুলে গেলে পুনরুদ্ধার"}].map(item=><div key={item.title} className="flex items-start gap-3 rounded-lg border border-slate-700 bg-[#151f2e] p-3"><input type="checkbox" checked={false} disabled aria-label={item.title+" বন্ধ"} className="mt-1 h-4 w-4 accent-teal-500"/><div><p className="text-sm font-semibold text-slate-200">{item.title}</p><p className="mt-1 text-xs text-slate-400">{item.desc}</p><p className="mt-2 text-[11px] font-semibold text-amber-300">এখন বন্ধ · পরে চালু হবে</p></div></div>)}
+    </div>
+    <p className="mt-3 text-xs text-slate-500">নোট: SMS OTP-এর জন্য পরে বাংলাদেশি SMS gateway API, server-side secret configuration, OTP expiry ও rate limiting যোগ করতে হবে।</p>
+  </section>
   <form className="space-y-5" onSubmit={e=>{e.preventDefault();saveSiteSettings(siteSettings);action("সেটিংস এই ব্রাউজারে সংরক্ষণ হয়েছে। অর্ডার ফর্মে প্রযোজ্য হবে।");}}>
     <section className="rounded-xl border border-slate-700 bg-[#0d1522] p-4 sm:p-5">
       <h3 className="font-bold text-teal-200">ওয়েবসাইটের পরিচিতি ও চার্জ</h3>
