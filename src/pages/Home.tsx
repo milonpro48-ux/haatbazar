@@ -212,6 +212,7 @@ export default function Home() {
           <nav className="mt-4 grid gap-1 text-sm">
             <Link href="/dashboard" className="rounded-lg bg-emerald-500/15 px-3 py-3 font-semibold text-emerald-200">◈ ওভারভিউ</Link>
             <Link href="/my-orders" className="rounded-lg px-3 py-3 text-slate-300 hover:bg-white/5">▤ আমার অর্ডার</Link>
+            <Link href="/profile" className="rounded-lg px-3 py-3 text-slate-300 hover:bg-white/5">👤 আমার প্রোফাইল</Link>
             <Link href="/" className="rounded-lg px-3 py-3 text-slate-300 hover:bg-white/5">⌕ মার্কেটপ্লেস</Link>
           </nav>
           <p className="mt-5 rounded-xl border border-amber-300/20 bg-amber-300/5 p-3 text-xs leading-5 text-amber-100">ডেমো মোড: তথ্য এই ব্রাউজারে সংরক্ষিত। বাস্তব সার্ভার ডেটার সঙ্গে যুক্ত নয়।</p>
