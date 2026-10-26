@@ -1,5 +1,8 @@
 export type PaymentOption = "later" | "bkash" | "nagad" | "rocket";
 export type OrderFieldKey = "name" | "phone" | "email" | "address";
+export type WhyItem = { id: string; icon: string; title: string; body: string; enabled: boolean };
+export type FooterLink = { id: string; label: string; href: string; enabled: boolean };
+export type FooterLinkGroup = { id: string; links: FooterLink[] };
 export type EditableCategory = { id: string; label: string; emoji: string; slug: string; enabled: boolean };
 export type SiteSettings = {
   headerPromo: string;
@@ -14,6 +17,15 @@ export type SiteSettings = {
   footerContactTitle: string;
   footerDescription: string;
   footerCopyright: string;
+  whyTitle: string;
+  whyItems: WhyItem[];
+  footerShopTitle: string;
+  footerContactText: string;
+  footerContactButton: string;
+  footerOrderTitle: string;
+  footerOrderNotice: string;
+  footerBadges: string[];
+  footerLinks: FooterLinkGroup[];
   categories: EditableCategory[];
   siteName: string;
   tagline: string;
@@ -34,6 +46,40 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   footerSupportTitle: "ক্রেতা সহায়তা", footerMarketplaceTitle: "হাটবাজার", footerSellerTitle: "বিক্রেতা কর্নার", footerContactTitle: "যোগাযোগ ও তথ্য",
   footerDescription: "সারা বাংলাদেশের ক্রেতা ও বিক্রেতাদের জন্য অনলাইন বাজার",
   footerCopyright: "© ২০২৬ হাটবাজার · বাংলাদেশের অনলাইন কেনাবেচার বাজার",
+  whyTitle: "কেন হাটবাজার?",
+  whyItems: [
+    {id:"known-seller",icon:"store",title:"চেনা মুখ, চেনা স্বাদ",body:"বিক্রেতার নাম, এলাকা ও ফোন নম্বর সব খোলা।",enabled:true},
+    {id:"fresh",icon:"leaf",title:"টাটকা মানে সত্যিই টাটকা",body:"সরাসরি কৃষকের কাছ থেকে, স্টকে বসে থাকা মাল নয়।",enabled:true},
+    {id:"fair-price",icon:"badge-check",title:"দামে লুকোচুরি নেই",body:"যা দেখছেন সেটাই দাম, দরদাম সরাসরি বিক্রেতার সাথে।",enabled:true},
+    {id:"nearby",icon:"truck",title:"কাছের বিক্রেতা",body:"জেলা ধরে খুঁজে নিজের এলাকার বিক্রেতা পান।",enabled:true}
+  ],
+  footerShopTitle: "হাটবাজারে কেনাকাটা করুন",
+  footerContactText: "প্রশ্ন বা সহায়তার জন্য যোগাযোগ পেজে যান।",
+  footerContactButton: "যোগাযোগ করুন",
+  footerOrderTitle: "পেমেন্ট ও অর্ডার",
+  footerOrderNotice: "অর্ডার দেওয়ার আগে বিক্রেতার সঙ্গে পণ্যের দাম ও ডেলিভারি নিশ্চিত করুন।",
+  footerBadges: ["সরাসরি বিক্রেতার সঙ্গে যোগাযোগ","খুচরা ও পাইকারি","বাংলাদেশজুড়ে"],
+  footerLinks: [
+    {id:"support",links:[
+      {id:"help",label:"সহায়তা কেন্দ্র",href:"/contact",enabled:true},
+      {id:"buying",label:"কীভাবে কিনবেন",href:"/about",enabled:true},
+      {id:"refund",label:"রিফান্ড ও ফেরত নীতি",href:"/refund-policy",enabled:true},
+      {id:"delivery",label:"ডেলিভারি তথ্য",href:"/delivery-policy",enabled:true},
+      {id:"terms",label:"শর্তাবলি",href:"/terms",enabled:true}
+    ]},
+    {id:"marketplace",links:[
+      {id:"about",label:"আমাদের সম্পর্কে",href:"/about",enabled:true},
+      {id:"contact",label:"যোগাযোগ করুন",href:"/contact",enabled:true},
+      {id:"privacy",label:"গোপনীয়তা নীতি",href:"/privacy",enabled:true},
+      {id:"terms-use",label:"ব্যবহারের শর্ত",href:"/terms",enabled:true},
+      {id:"popular",label:"জনপ্রিয় ক্যাটাগরি",href:"/#popular",enabled:true}
+    ]},
+    {id:"seller",links:[
+      {id:"products",label:"পণ্য দেখুন",href:"/#products",enabled:true},
+      {id:"post-ad",label:"পণ্য বিক্রির বিজ্ঞাপন দিন",href:"action:post-ad",enabled:true},
+      {id:"seller-help",label:"বিক্রেতার সহায়তা",href:"/contact",enabled:true}
+    ]}
+  ],
   categories: [
     {id:"electronics",label:"ইলেকট্রিক ও গেজেট",emoji:"📱",slug:"electronics-gadgets",enabled:true},
     {id:"fashion",label:"পোশাক, জুতা ও ফ্যাশন",emoji:"👕",slug:"clothing-shoes-fashion",enabled:true},
@@ -70,6 +116,9 @@ export function getSiteSettings(): SiteSettings {
     return {
       ...DEFAULT_SITE_SETTINGS, ...saved,
       categories: Array.isArray(saved.categories) ? saved.categories : DEFAULT_SITE_SETTINGS.categories,
+      whyItems: Array.isArray(saved.whyItems) ? saved.whyItems : DEFAULT_SITE_SETTINGS.whyItems,
+      footerBadges: Array.isArray(saved.footerBadges) ? saved.footerBadges : DEFAULT_SITE_SETTINGS.footerBadges,
+      footerLinks: Array.isArray(saved.footerLinks) ? saved.footerLinks : DEFAULT_SITE_SETTINGS.footerLinks,
       paymentMethods: { ...DEFAULT_SITE_SETTINGS.paymentMethods, ...(saved.paymentMethods || {}) },
       paymentLabels: { ...DEFAULT_SITE_SETTINGS.paymentLabels, ...(saved.paymentLabels || {}) },
       fieldLabels: { ...DEFAULT_SITE_SETTINGS.fieldLabels, ...(saved.fieldLabels || {}) },
