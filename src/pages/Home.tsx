@@ -8,6 +8,7 @@ import { ListingCard } from "@/components/ListingCard";
 import { AdminAnalytics } from "@/pages/AdminAnalytics";
 import AdminPanel from "@/pages/AdminPanel";
 import SuperAdminDashboard from "@/pages/SuperAdminDashboard";
+import SuperAdminLogin from "@/pages/SuperAdminLogin";
 import MyOrders from "@/pages/MyOrders";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { PostAdDialog } from "@/components/PostAdDialog";
@@ -235,7 +236,12 @@ export default function Home() {
   );
 
   if (path === "/my-orders") return <MyOrders onBack={() => setLocation("/")} />;
-  if (path === "/admin" && import.meta.env.VITE_DEMO_MODE === "true") return <SuperAdminDashboard onBack={() => setLocation("/")} />;
+  if (path === "/admin/login" && import.meta.env.VITE_DEMO_MODE === "true") return <SuperAdminLogin />;
+  if (path === "/admin" && import.meta.env.VITE_DEMO_MODE === "true") {
+    const adminSession = (() => { try { const v = JSON.parse(localStorage.getItem("haatbazar_super_admin_demo_session_v1") || "null"); return v?.demoOnly === true && typeof v?.email === "string"; } catch { return false; } })();
+    if (!adminSession) { setLocation("/admin/login"); return null; }
+    return <SuperAdminDashboard onBack={() => { localStorage.removeItem("haatbazar_super_admin_demo_session_v1"); setLocation("/"); }} />;
+  }
   if (path === "/admin") return <AdminPanel onBack={() => setLocation("/")} />;
   if (path === "/admin/analytics") return <AdminAnalytics onBack={() => setLocation("/admin")} />;
   if (showAnalytics) return <AdminAnalytics onBack={() => setShowAnalytics(false)} />;
