@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getSiteSettings, saveSiteSettings, type SiteSettings, type PaymentOption, type OrderFieldKey } from "@/lib/siteSettings";
 import { ArrowLeft, Bell, Boxes, ChartNoAxesCombined, Check, ChevronDown, CircleHelp, ClipboardList, Eye, LayoutDashboard, LockKeyhole, Menu, Search, Settings, Shield, ShieldCheck, ShoppingBag, Store, Users, X, TrendingUp, UserRound, Sprout, Shirt, Laptop, Pencil, Trash2, Coins, Activity, BarChart3 } from "lucide-react";
 
 type Props = { onBack: () => void };
@@ -46,6 +47,7 @@ export default function SuperAdminDashboard({ onBack }: Props) {
   const [categoryState, setCategoryState] = useState<Record<string, boolean>>(Object.fromEntries(categories.map(c => [c.id, c.enabled])));
   const [notice, setNotice] = useState("");
   const [userStatus, setUserStatus] = useState<Record<string, boolean>>({});
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => getSiteSettings());
   const filteredUsers = demoUsers.filter(u => (u.name + u.role + u.contact).toLowerCase().includes(query.toLowerCase()));
   const filteredApps = applications.filter(a => (a.name + a.person + a.status).toLowerCase().includes(query.toLowerCase()));
   const pending = applications.filter(a => a.status === "Pending").length;
@@ -87,7 +89,46 @@ export default function SuperAdminDashboard({ onBack }: Props) {
             </section>
             <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 py-3 text-[10px] text-slate-500"><span>◈ Haatbazar · MSA Marketplace</span><span>© ২০২৬ HaatBazar · Demo environment · Real payments disabled</span><span>About us　 Privacy　 Terms　 Contact</span></footer>
           </>}
-          {active !== "dashboard" && <section className="rounded-xl border border-slate-700/80 bg-[#111a28] p-5"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-teal-500/10 text-teal-300"><BarChart3 size={22}/></span><div><h2 className="text-lg font-bold">{currentTitle}</h2><p className="mt-1 text-sm text-slate-400">এই বিভাগটি ডেমো প্রিভিউ; বাস্তব অ্যাকাউন্ট ও ডেটাবেস সংযোগ প্রয়োজন।</p></div></div>{active==="vendors"&&<div className="mt-4 space-y-2">{applications.map(a=><div key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-700 p-3"><span>{a.name} · {a.person}</span><span className="text-xs text-slate-400">{a.status}</span></div>)}</div>}{active==="settings"&&<p className="mt-4 rounded-lg bg-amber-500/10 p-3 text-sm text-amber-200">এখানে কোনো পরিবর্তন লাইভ সাইটে প্রয়োগ হবে না।</p>}</section>}
+          {active !== "dashboard" && <section className="rounded-xl border border-slate-700/80 bg-[#111a28] p-5"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-teal-500/10 text-teal-300"><BarChart3 size={22}/></span><div><h2 className="text-lg font-bold">{currentTitle}</h2><p className="mt-1 text-sm text-slate-400">এই বিভাগটি ডেমো প্রিভিউ; বাস্তব অ্যাকাউন্ট ও ডেটাবেস সংযোগ প্রয়োজন।</p></div></div>{active==="vendors"&&<div className="mt-4 space-y-2">{applications.map(a=><div key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-700 p-3"><span>{a.name} · {a.person}</span><span className="text-xs text-slate-400">{a.status}</span></div>)}</div>}{active==="settings"&&<div className="mt-5 space-y-5">
+  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100"><b>ডেমো সেটিংস:</b> Save করলে এই ব্রাউজারের local storage-এ থাকবে এবং ডেমো Order Dialog-এ ব্যবহার হবে। GitHub Pages static হওয়ায় এটি MySQL/সব ব্যবহারকারীর ডেটাবেসে সংরক্ষণ করে না; লাইভ সাইটে কোনো প্রভাব নেই।</div>
+  <form className="space-y-5" onSubmit={e=>{e.preventDefault();saveSiteSettings(siteSettings);action("সেটিংস এই ব্রাউজারে সংরক্ষণ হয়েছে। অর্ডার ফর্মে প্রযোজ্য হবে।");}}>
+    <section className="rounded-xl border border-slate-700 bg-[#0d1522] p-4 sm:p-5">
+      <h3 className="font-bold text-teal-200">ওয়েবসাইটের পরিচিতি ও চার্জ</h3>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <label className="grid gap-1.5 text-sm text-slate-300">ওয়েবসাইটের নাম<input value={siteSettings.siteName} onChange={e=>setSiteSettings(s=>({...s,siteName:e.target.value}))} required maxLength={70} className="rounded-lg border border-slate-700 bg-[#151f2e] px-3 py-2.5 text-white"/></label>
+        <label className="grid gap-1.5 text-sm text-slate-300">স্লোগান<input value={siteSettings.tagline} onChange={e=>setSiteSettings(s=>({...s,tagline:e.target.value}))} maxLength={160} className="rounded-lg border border-slate-700 bg-[#151f2e] px-3 py-2.5 text-white"/></label>
+        <label className="grid gap-1.5 text-sm text-slate-300">ডেলিভারি চার্জ (৳)<input type="number" min="0" step="0.01" value={siteSettings.deliveryFee} onChange={e=>setSiteSettings(s=>({...s,deliveryFee:Math.max(0,Number(e.target.value)||0)}))} className="rounded-lg border border-slate-700 bg-[#151f2e] px-3 py-2.5 text-white"/></label>
+        <label className="grid gap-1.5 text-sm text-slate-300">অর্ডার নিশ্চিত করার বোতামের লেখা<input value={siteSettings.orderButtonText} onChange={e=>setSiteSettings(s=>({...s,orderButtonText:e.target.value}))} required maxLength={70} className="rounded-lg border border-slate-700 bg-[#151f2e] px-3 py-2.5 text-white"/></label>
+      </div>
+    </section>
+    <section className="rounded-xl border border-slate-700 bg-[#0d1522] p-4 sm:p-5">
+      <h3 className="font-bold text-teal-200">বিক্রেতার কমিশন</h3>
+      <p className="mt-1 text-xs text-slate-400">খুচরা ও পাইকারি কমিশন আলাদাভাবে নির্ধারণ করো। এই ডেমোতে হার সংরক্ষণ হবে; বাস্তব অর্ডার থেকে টাকা কাটার হিসাব এখনো সংযুক্ত নয়।</p>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <label className="grid gap-1.5 text-sm text-slate-300">খুচরা বিক্রেতার কমিশন (%)<input type="number" min="0" max="100" step="0.1" value={siteSettings.retailCommission} onChange={e=>setSiteSettings(s=>({...s,retailCommission:Math.min(100,Math.max(0,Number(e.target.value)||0))}))} className="rounded-lg border border-slate-700 bg-[#151f2e] px-3 py-2.5 text-white"/></label>
+        <label className="grid gap-1.5 text-sm text-slate-300">পাইকারি বিক্রেতার কমিশন (%)<input type="number" min="0" max="100" step="0.1" value={siteSettings.wholesaleCommission} onChange={e=>setSiteSettings(s=>({...s,wholesaleCommission:Math.min(100,Math.max(0,Number(e.target.value)||0))}))} className="rounded-lg border border-slate-700 bg-[#151f2e] px-3 py-2.5 text-white"/></label>
+      </div>
+    </section>
+    <section className="rounded-xl border border-slate-700 bg-[#0d1522] p-4 sm:p-5">
+      <h3 className="font-bold text-teal-200">অর্ডার ফর্মে পেমেন্ট পদ্ধতি</h3>
+      <p className="mt-1 text-xs text-slate-400">যে পদ্ধতিগুলো চালু রাখবে সেগুলোই ডেমো Order Dialog-এ দেখাবে। অনলাইন গেটওয়ে credentials না থাকলে বাস্তব পেমেন্ট হবে না।</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">{(["later","bkash","nagad","rocket"] as PaymentOption[]).map(method=><div key={method} className="rounded-lg border border-slate-700 bg-[#151f2e] p-3">
+        <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={siteSettings.paymentMethods[method]} onChange={e=>setSiteSettings(s=>({...s,paymentMethods:{...s.paymentMethods,[method]:e.target.checked}}))}/>{method==="later"?"COD / পরে পেমেন্ট":method.toUpperCase()}</label>
+        <input aria-label={method+" পেমেন্টের প্রদর্শিত নাম"} value={siteSettings.paymentLabels[method]} onChange={e=>setSiteSettings(s=>({...s,paymentLabels:{...s.paymentLabels,[method]:e.target.value}}))} maxLength={70} className="mt-2 w-full rounded-lg border border-slate-700 bg-[#0d1522] px-3 py-2 text-sm text-white"/>
+      </div>)}</div>
+      {!Object.values(siteSettings.paymentMethods).some(Boolean)&&<p className="mt-3 text-sm text-rose-300">অন্তত একটি পেমেন্ট পদ্ধতি চালু রাখো।</p>}
+    </section>
+    <section className="rounded-xl border border-slate-700 bg-[#0d1522] p-4 sm:p-5">
+      <h3 className="font-bold text-teal-200">অর্ডার বাটনে ক্লিক করার পরের ফর্ম</h3>
+      <p className="mt-1 text-xs text-slate-400">নিচের লেবেল ও placeholder পরিবর্তন করলে Order Dialog-এ প্রযোজ্য হবে।</p>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">{(["name","phone","email","address"] as OrderFieldKey[]).map(field=><div key={field} className="grid gap-2 rounded-lg border border-slate-700 bg-[#151f2e] p-3">
+        <label className="grid gap-1 text-xs text-slate-400">{field==="name"?"নাম ফিল্ডের লেবেল":field==="phone"?"ফোন ফিল্ডের লেবেল":field==="email"?"ইমেইল ফিল্ডের লেবেল":"ঠিকানা ফিল্ডের লেবেল"}<input value={siteSettings.fieldLabels[field]} onChange={e=>setSiteSettings(s=>({...s,fieldLabels:{...s.fieldLabels,[field]:e.target.value}}))} required maxLength={70} className="rounded-lg border border-slate-700 bg-[#0d1522] px-3 py-2 text-sm text-white"/></label>
+        <label className="grid gap-1 text-xs text-slate-400">ইনপুটে দেখানো নির্দেশনা<input value={siteSettings.fieldPlaceholders[field]} onChange={e=>setSiteSettings(s=>({...s,fieldPlaceholders:{...s.fieldPlaceholders,[field]:e.target.value}}))} required maxLength={100} className="rounded-lg border border-slate-700 bg-[#0d1522] px-3 py-2 text-sm text-white"/></label>
+      </div>)}</div>
+    </section>
+    <div className="flex flex-wrap gap-3"><button type="submit" disabled={!Object.values(siteSettings.paymentMethods).some(Boolean)} className="rounded-lg bg-violet-600 px-5 py-3 text-sm font-bold text-white hover:bg-violet-500 disabled:opacity-50">Save Changes · সেটিংস সংরক্ষণ</button><button type="button" onClick={()=>{setSiteSettings(getSiteSettings());action("সংরক্ষিত ডেমো সেটিংস আবার লোড হয়েছে।");}} className="rounded-lg border border-slate-600 px-4 py-3 text-sm">সংরক্ষিত মান ফিরিয়ে আনুন</button></div>
+  </form>
+</div>}</section>}
         </div>
       </main>
     </div>
