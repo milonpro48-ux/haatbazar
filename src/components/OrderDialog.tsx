@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Minus, Plus } from "lucide-react";
 import { createOrder, startPayment, LOGIN_URL, type Listing } from "@/lib/api";
 import { money, bn, unitLabel } from "@/lib/data";
+import { getSiteSettings, type PaymentOption } from "@/lib/siteSettings";
 
 const field = "w-full rounded-lg border bg-background px-3 py-2";
 
@@ -10,7 +11,9 @@ export function OrderDialog({ item, onClose, onDone }: { item: Listing; onClose:
   const [busy, setBusy] = useState(false);
   const [needLogin, setNeedLogin] = useState(false);
   const [error, setError] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"later"|"bkash"|"nagad"|"rocket">("later");
+  const [siteSettings] = useState(() => getSiteSettings());
+  const availablePaymentMethods = (["later", "bkash", "nagad", "rocket"] as PaymentOption[]).filter(method => siteSettings.paymentMethods[method]);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentOption>(() => (["later", "bkash", "nagad", "rocket"] as PaymentOption[]).find(method => getSiteSettings().paymentMethods[method]) || "later");
   const [pendingPaymentOrderId, setPendingPaymentOrderId] = useState("");
   const maxQty = Math.max(1, item.quantity);
   const q = Math.min(Math.max(1, Number.isFinite(qty) ? qty : 1), maxQty);
@@ -77,16 +80,13 @@ export function OrderDialog({ item, onClose, onDone }: { item: Listing; onClose:
             </div>
           </div>
         </div>
-        <input name="name" required placeholder="আপনার নাম" className={field} />
+        <label className="block space-y-1 text-sm">{siteSettings.fieldLabels.name}<input name="name" required placeholder={siteSettings.fieldPlaceholders.name} className={field} /></label>
         <input name="phone" required inputMode="tel" pattern="^(?:\+?88)?01[3-9][0-9]{8}$" title="১১ সংখ্যার মোবাইল নম্বর" placeholder="ফোন নম্বর (01XXXXXXXXX)" className={field} />
-        <input name="email" type="email" required placeholder="ইমেইল (পেমেন্ট রসিদের জন্য)" className={field} />
-        <textarea name="address" required rows={2} placeholder="ডেলিভারির ঠিকানা" className={field} />
+        <label className="block space-y-1 text-sm">{siteSettings.fieldLabels.email}<input name="email" type="email" required placeholder={siteSettings.fieldPlaceholders.email} className={field} /></label>
+        <label className="block space-y-1 text-sm">{siteSettings.fieldLabels.address}<textarea name="address" required rows={2} placeholder={siteSettings.fieldPlaceholders.address} className={field} /></label>
         <label className="block text-sm text-muted-foreground">পেমেন্ট পদ্ধতি
           <select disabled={!!pendingPaymentOrderId} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)} className={field}>
-            <option value="later">অর্ডার দিন, পরে পেমেন্ট</option>
-            <option value="bkash">bKash</option>
-            <option value="nagad">Nagad</option>
-            <option value="rocket">Rocket</option>
+            {availablePaymentMethods.map(method => <option key={method} value={method}>{siteSettings.paymentLabels[method]}</option>)}
           </select>
         </label>
         <p className="text-xs text-muted-foreground">অনলাইন পেমেন্টের জন্য ব্যবসায়িক SSLCommerz অ্যাকাউন্ট ও সংশ্লিষ্ট চ্যানেল সক্রিয় থাকতে হবে।</p>
@@ -94,7 +94,7 @@ export function OrderDialog({ item, onClose, onDone }: { item: Listing; onClose:
         {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
         {pendingPaymentOrderId && paymentMethod !== "later" && <button type="button" disabled={busy} onClick={async()=>{setBusy(true);const url=await startPayment(pendingPaymentOrderId,paymentMethod);setBusy(false);if(url)window.location.assign(url);else setError("পেমেন্ট এখনও শুরু হয়নি। Gateway configuration পরীক্ষা করুন অথবা অর্ডার ID দিয়ে সহায়তা নিন।");}} className="w-full rounded-lg border py-2.5 font-semibold">পেমেন্ট আবার চেষ্টা করুন</button>}
         <button disabled={busy || !!pendingPaymentOrderId} className="w-full rounded-lg bg-emerald-600 py-2.5 font-semibold text-white disabled:opacity-60">
-          {busy ? "পাঠানো হচ্ছে…" : `অর্ডার নিশ্চিত করুন (${bn(q)} ${unitLabel(item.unit)})`}
+          {busy ? "পাঠানো হচ্ছে…" : `${siteSettings.orderButtonText} (${bn(q)} ${unitLabel(item.unit)})`}
         </button>
       </form>
     </div>
