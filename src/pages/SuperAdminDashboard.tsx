@@ -47,7 +47,7 @@ export default function SuperAdminDashboard({ onBack }: Props) {
   const [applications, setApplications] = useState(initialApplications);
   const [categoryState, setCategoryState] = useState<Record<string, boolean>>(Object.fromEntries(categories.map(c => [c.id, c.enabled])));
   const [notice, setNotice] = useState("");
-  const [adminProfile, setAdminProfile] = useState(() => {
+  const [adminProfile, setAdminProfile] = useState<{ name: string; email: string; phone: string }>(() => {
     try {
       const saved = localStorage.getItem("haatbazar-admin-profile");
       return saved ? { name: "MSA Milon Miah", email: "milonmiah9002@gmail.com", phone: "+8801755264490", ...JSON.parse(saved) } : { name: "MSA Milon Miah", email: "milonmiah9002@gmail.com", phone: "+8801755264490" };
