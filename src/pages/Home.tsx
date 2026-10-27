@@ -187,6 +187,8 @@ export default function Home() {
         (!saleType || i.saleType === saleType || i.saleType === "both"))
     : [];
 
+  const customerProfileSummary = (() => { try { return JSON.parse(localStorage.getItem("haatbazar_customer_profile_v1") || "{}") as {name?: string; photo?: string}; } catch { return {}; } })();
+  const dashboardDisplayName = customerProfileSummary.name?.trim() || demoUser?.name || "ব্যবহারকারী";
   const dashboardRole = demoUser?.role || "buyer";
   const dashboardDetails = {
     buyer: { title: "Customer Dashboard — গ্রাহক / ক্রেতা", subtitle: "নিজের কেনাকাটা, অর্ডার, পছন্দের পণ্য ও প্রোফাইল পরিচালনা করুন।", icon: "🛍️", actions: [{ href: "/my-orders", icon: "📦", title: "আমার অর্ডার", body: "অর্ডার পেজ খুলুন; বাস্তব ট্র্যাকিং ডেটাবেস সংযোগের পরে চালু হবে।", cta: "অর্ডার দেখুন" }, { href: "/", icon: "🔎", title: "পণ্য খুঁজুন", body: "খুচরা ও পাইকারি পণ্য ব্রাউজ করুন।", cta: "কেনাকাটা করুন" }], modules: [{icon:"🚚",title:"অর্ডার ট্র্যাকিং",detail:"অর্ডারের বর্তমান অবস্থা",status:"ডেটাবেস সংযোগ প্রয়োজন"},{icon:"♡",title:"উইশলিস্ট",detail:"পছন্দের পণ্য সংরক্ষণ",status:"পরবর্তী ধাপ"},{icon:"🧾",title:"পেমেন্ট হিস্ট্রি",detail:"অর্ডারভিত্তিক পেমেন্ট রেকর্ড",status:"পেমেন্ট বন্ধ"},{icon:"👤",title:"প্রোফাইল",detail:"নাম, যোগাযোগ ও ঠিকানা",status:"পরবর্তী ধাপ"}] },
@@ -203,7 +205,7 @@ export default function Home() {
             <Link href="/" aria-label="মার্কেটপ্লেসে ফিরে যান" title="মার্কেটপ্লেসে ফিরে যান" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400">←</Link>
             <Link href="/" className="text-xl font-extrabold tracking-tight text-white">{brandSettings.siteName}<span className="ml-2 text-xs font-medium text-emerald-300">হাটবাজার</span></Link>
           </div>
-          <div className="flex items-center gap-2"><span className="hidden text-sm text-slate-300 sm:inline">{demoUser.name}</span><button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setLocation("/"); }} className="rounded-xl border border-white/15 px-3 py-2 text-sm font-semibold hover:bg-white/10">লগআউট</button></div>
+          <div className="flex items-center gap-2 sm:gap-3"><Link href="/profile" aria-label="আমার প্রোফাইল" className="flex min-w-0 items-center gap-2 rounded-xl px-1 py-1 hover:bg-white/5">{customerProfileSummary.photo ? <img src={customerProfileSummary.photo} alt="প্রোফাইল ছবি" className="h-9 w-9 shrink-0 rounded-full border border-white/20 object-cover" /> : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-white/15 bg-emerald-500/15 text-sm font-bold text-emerald-200">{dashboardDisplayName.trim().slice(0,2)}</span>}<span className="max-w-[130px] truncate text-sm font-semibold text-slate-200">{dashboardDisplayName}</span></Link><button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setLocation("/"); }} className="shrink-0 rounded-xl border border-white/15 px-3 py-2 text-sm font-semibold hover:bg-white/10">লগআউট</button></div>
         </div>
       </header>
       <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 lg:grid-cols-[230px_minmax(0,1fr)]">
@@ -221,7 +223,7 @@ export default function Home() {
         <main className="min-w-0">
           <section className="overflow-hidden rounded-3xl border border-emerald-300/15 bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-900 p-6 sm:p-8">
             <p className="text-sm font-semibold text-emerald-300">HAATBAZAR / WORKSPACE</p>
-            <h1 className="mt-3 text-2xl font-extrabold sm:text-3xl">স্বাগতম, {demoUser.name}!</h1>
+            <h1 className="mt-3 text-2xl font-extrabold sm:text-3xl">স্বাগতম, {dashboardDisplayName}!</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{dashboardDetails.subtitle}</p>
             <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-200"><span className="h-2 w-2 rounded-full bg-emerald-400"></span> {dashboardDetails.title}</div>
           </section>
@@ -233,7 +235,7 @@ export default function Home() {
             <div className="grid gap-3 md:grid-cols-2">{dashboardDetails.actions.map((action) => <Link key={action.title} href={action.href} className="group rounded-2xl border border-white/10 bg-slate-900 p-5 transition hover:border-emerald-400/50 hover:bg-slate-900/80"><span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-400/10 text-2xl">{action.icon}</span><h3 className="mt-4 font-bold">{action.title}</h3><p className="mt-1 text-sm leading-6 text-slate-400">{action.body}</p><span className="mt-4 inline-flex text-sm font-semibold text-emerald-300">{action.cta} →</span></Link>)}</div>
           </section>
           <section className="mt-7"><div className="mb-3"><p className="text-xs font-bold uppercase tracking-widest text-emerald-300">Role-specific modules</p><h2 className="mt-1 text-xl font-bold">আপনার ড্যাশবোর্ডের বিভাগ</h2><p className="mt-1 text-sm text-slate-400">যে ফিচারগুলো এখনো বাস্তব ডেটাবেসে যুক্ত নয়, সেগুলো স্পষ্টভাবে চিহ্নিত করা হয়েছে।</p></div><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{dashboardDetails.modules.map((module) => <article key={module.title} className="rounded-2xl border border-white/10 bg-slate-900 p-4"><span className="text-2xl">{module.icon}</span><h3 className="mt-3 font-bold">{module.title}</h3><p className="mt-1 min-h-10 text-sm leading-5 text-slate-400">{module.detail}</p><span className="mt-3 inline-block rounded-full border border-amber-300/20 bg-amber-300/5 px-2.5 py-1 text-xs font-semibold text-amber-100">{module.status}</span></article>)}</div></section>
-          <section className="mt-5 rounded-2xl border border-white/10 bg-slate-900 p-5"><h2 className="font-bold">অ্যাকাউন্টের তথ্য</h2><div className="mt-3 grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-400">নাম</p><p className="mt-1 font-semibold">{demoUser.name}</p></div><div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-400">ইমেইল</p><p className="mt-1 break-all font-semibold">{demoUser.email}</p></div></div></section>
+          <section className="mt-5 rounded-2xl border border-white/10 bg-slate-900 p-5"><h2 className="font-bold">অ্যাকাউন্টের তথ্য</h2><div className="mt-3 grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-400">নাম</p><p className="mt-1 font-semibold">{dashboardDisplayName}</p></div><div className="rounded-xl bg-slate-950 p-3"><p className="text-xs text-slate-400">ইমেইল</p><p className="mt-1 break-all font-semibold">{demoUser.email}</p></div></div></section>
           <p className="mt-5 text-xs leading-5 text-slate-500">নিরাপত্তা নোট: সাধারণ রেজিস্ট্রেশন থেকে অ্যাডমিন অ্যাক্সেস দেওয়া হয় না। অ্যাডমিন প্যানেল আলাদা অনুমোদিত অ্যাকাউন্টের জন্য; এই ডেমো রোলগুলো বাস্তব অনুমতি বা সার্ভার-সাইড authorization নয়।</p>
         </main>
       </div>
@@ -262,7 +264,7 @@ export default function Home() {
           <div className="flex items-center gap-2">
             {demoUser ? (
               <>
-                <span className="hidden max-w-32 truncate text-sm font-semibold sm:inline">স্বাগতম, {demoUser.name}</span>
+                <span className="hidden max-w-32 truncate text-sm font-semibold sm:inline">স্বাগতম, {dashboardDisplayName}</span>
                 <Link href="/dashboard" className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800">ড্যাশবোর্ড</Link>
                 <Link href="/profile" className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">প্রোফাইল</Link>
                 <button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setToast("ডেমো অ্যাকাউন্ট থেকে লগআউট হয়েছে।"); }} className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">লগআউট</button>
