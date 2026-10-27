@@ -258,67 +258,33 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b-4 border-orange-500 bg-card/95 shadow-sm backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4">
-          <Link href="/" aria-label="Haat Bazar homepage" className="flex shrink-0 items-center gap-3 text-xl font-extrabold tracking-tight text-emerald-800 transition hover:opacity-90 sm:text-2xl dark:text-emerald-300"><span className="grid h-11 w-11 place-items-center rounded-xl bg-orange-500 text-white shadow-sm ring-2 ring-orange-100"><Store size={24} strokeWidth={2.4} /></span><span className="leading-tight">{brandSettings.siteName}<small className="mt-0.5 block text-[10px] font-semibold tracking-wide text-muted-foreground">{brandSettings.tagline}</small></span></Link>
-          <div className="flex items-center gap-2">
-            {demoUser ? (
-              <>
-                <span className="hidden max-w-32 truncate text-sm font-semibold sm:inline">স্বাগতম, {dashboardDisplayName}</span>
-                <Link href="/dashboard" className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800">ড্যাশবোর্ড</Link>
-                <Link href="/profile" className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">প্রোফাইল</Link>
-                <button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setToast("ডেমো অ্যাকাউন্ট থেকে লগআউট হয়েছে।"); }} className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">লগআউট</button>
-              </>
-            ) : (
-              <>
-                <button type="button" onClick={() => setAuthMode("login")} className="rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted">লগইন</button>
-                <button type="button" onClick={() => setAuthMode("register")} className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-600">সাইন আপ</button>
-              </>
-            )}
-            <a href="/my-orders" className="hidden rounded-lg border px-3 py-2 text-sm font-semibold hover:bg-muted sm:inline-flex">আমার অর্ডার</a>
-            <button onClick={() => setPosting(true)} className="flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700">
-              <Plus size={18} /> বিজ্ঞাপন দিন
-            </button>
+      <div className="bg-emerald-950 px-3 py-1.5 text-center text-[11px] font-semibold tracking-wide text-white sm:text-xs">{brandSettings.headerPromo || "🎉 হাটবাজারে নতুন অফার — সারা বাংলাদেশে কেনা-বেচা করুন"}</div>
+      <header className="sticky top-0 z-40 border-b border-emerald-100 bg-white/95 shadow-sm backdrop-blur">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
+          <Link href="/" aria-label="HaatBazar homepage" className="flex shrink-0 items-center gap-2 text-xl font-extrabold tracking-tight text-emerald-800 sm:text-2xl"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-700 text-white shadow-sm"><Store size={23} strokeWidth={2.4}/></span><span className="leading-tight">{brandSettings.siteName}<small className="mt-0.5 block text-[9px] font-semibold tracking-[.16em] text-slate-500">{brandSettings.tagline}</small></span></Link>
+          <label className="order-3 flex min-w-[180px] flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 focus-within:border-emerald-500 focus-within:bg-white sm:order-none"><Search size={18} className="shrink-0 text-slate-400"/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="পণ্য, ব্র্যান্ড বা ক্যাটাগরি খুঁজুন..." className="w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"/></label>
+          <div className="ml-auto flex items-center gap-2">
+            {demoUser ? <><Link href="/dashboard" className="hidden rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 sm:inline-flex">ড্যাশবোর্ড</Link><Link href="/profile" className="rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-emerald-50">অ্যাকাউন্ট</Link></> : <><button type="button" onClick={() => setAuthMode("login")} className="rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-emerald-50">লগইন</button><button type="button" onClick={() => setAuthMode("register")} className="rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50">সাইন আপ</button></>}
+            <button type="button" onClick={() => setPosting(true)} className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 sm:px-4"><Plus size={17}/> <span className="hidden sm:inline">বিজ্ঞাপন দিন</span><span className="sm:hidden">বিজ্ঞাপন</span></button>
           </div>
         </div>
       </header>
-
-      <div className="bg-orange-500 px-4 py-1.5 text-center text-xs font-semibold text-white">{brandSettings.headerPromo}</div>
-      <div className="px-4 py-1 text-center text-xs font-semibold">MSA</div>
-      <nav className="bg-emerald-900 text-white"><div className="mx-auto flex max-w-6xl gap-6 overflow-x-auto px-4 py-3 text-sm font-semibold"><Link href="/" className="shrink-0">☰ সব ক্যাটাগরি</Link><a href="#products" className="shrink-0">{brandSettings.headerNavToday}</a><a href="#popular" className="shrink-0">{brandSettings.headerNavPopular}</a><a href="#why" className="shrink-0">{brandSettings.headerNavWhy}</a></div></nav>
-      <div className="px-4 py-1 text-center text-xs font-semibold">MSA</div>
-      <section className="bg-gradient-to-br from-emerald-800 via-emerald-900 to-emerald-950 py-10 text-white">
-        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="min-w-0">
-          <h1 className="max-w-5xl text-3xl font-extrabold leading-tight md:text-4xl">{routeCategory ? `${routeCategory.label} — খুচরা ও পাইকারি বাজার` : routeDistrict ? `${routeDistrict} জেলার অনলাইন হাটবাজার`  : brandSettings.heroTitle}</h1>
-          <p className="mb-5 mt-2 opacity-90">{brandSettings.heroDescription}</p>
-          <p className="mb-3 max-w-3xl text-sm opacity-90">{routeCategory ? `${routeCategory.label} বিভাগে পণ্য, খুচরা দাম এবং পাইকারি সরবরাহকারী খুঁজুন।` : "সারা বাংলাদেশে পণ্য কিনুন বা বিক্রি করুন—খুচরা ও পাইকারি, দুই ধরনের ক্রেতার জন্যই।"}</p>
-          <div className="grid max-w-3xl gap-2 rounded-2xl bg-card p-2 text-foreground md:grid-cols-[1fr_190px]">
-            <label className="flex items-center gap-2 px-3">
-              <Search size={18} className="text-muted-foreground" />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="কী খুঁজছেন? মোবাইল, পোশাক, ধান…" className="w-full bg-transparent py-2 outline-none" />
-            </label>
-            <select value={district} onChange={(e) => setDistrict(e.target.value)} className="rounded-lg border bg-background px-3 py-2">
-              <option value="">সারা বাংলাদেশ</option>
-              {DISTRICTS.map((d) => <option key={d}>{d}</option>)}
-            </select>
+      <nav className="border-b border-emerald-100 bg-white text-slate-700"><div className="mx-auto flex max-w-6xl gap-6 overflow-x-auto px-4 py-2.5 text-sm font-semibold"><Link href="/" className="shrink-0 text-emerald-800">☰ সব ক্যাটাগরি</Link><a href="#products" className="shrink-0 hover:text-emerald-700">{brandSettings.headerNavToday || "নতুন পণ্য"}</a><a href="#popular" className="shrink-0 hover:text-emerald-700">{brandSettings.headerNavPopular || "জনপ্রিয়"}</a><a href="#why" className="shrink-0 hover:text-emerald-700">{brandSettings.headerNavWhy || "আমাদের সম্পর্কে"}</a><button type="button" onClick={() => setPosting(true)} className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-emerald-800 hover:bg-emerald-100">🎁 অফার / বিজ্ঞাপন</button><a href="/my-orders" className="shrink-0 hover:text-emerald-700">আমার অর্ডার</a></div></nav>
+      <section className="bg-gradient-to-r from-emerald-50 via-white to-amber-50">
+        <div className="mx-auto grid max-w-6xl items-center gap-5 px-4 py-7 sm:py-9 lg:grid-cols-[1.05fr_.95fr]">
+          <div className="relative z-10">
+            <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-bold text-emerald-800 shadow-sm"><span className="h-2 w-2 rounded-full bg-emerald-500"></span> বাংলাদেশের অনলাইন হাটবাজার</p>
+            <h1 className="max-w-2xl text-3xl font-black leading-tight tracking-tight text-slate-900 sm:text-4xl">{routeCategory ? `${routeCategory.label} — খুচরা ও পাইকারি বাজার` : routeDistrict ? `${routeDistrict} জেলার অনলাইন হাটবাজার` : (brandSettings.heroTitle || "বাংলাদেশের কেনাবেচা, এখন হাটবাজারে")}</h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">{brandSettings.heroDescription || "আপনার এলাকার পণ্য খুঁজুন, দোকান ও ব্যবসা বাড়ান—খুচরা এবং পাইকারি কেনা-বেচা সহজে।"}</p>
+            <div className="mt-5 flex flex-wrap gap-3"><button type="button" onClick={() => setPosting(true)} className="inline-flex items-center gap-2 rounded-full bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-md shadow-emerald-900/15 transition hover:-translate-y-0.5 hover:bg-emerald-800"><Plus size={17}/> বিজ্ঞাপন দিন</button><a href="#products" className="inline-flex items-center rounded-full border border-emerald-200 bg-white px-5 py-3 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50">পণ্য ও অফার দেখুন →</a></div>
+            <div className="mt-5 grid max-w-lg grid-cols-3 gap-2 text-center"><div className="rounded-xl border border-emerald-100 bg-white/90 px-2 py-3"><b className="block text-sm text-emerald-800">খুচরা</b><span className="text-[11px] text-slate-500">একটি বা কয়েকটি</span></div><div className="rounded-xl border border-emerald-100 bg-white/90 px-2 py-3"><b className="block text-sm text-emerald-800">পাইকারি</b><span className="text-[11px] text-slate-500">ব্যবসার জন্য</span></div><div className="rounded-xl border border-emerald-100 bg-white/90 px-2 py-3"><b className="block text-sm text-emerald-800">সারা দেশ</b><span className="text-[11px] text-slate-500">জেলা অনুযায়ী</span></div></div>
           </div>
-          </div>
-          <div className="relative mx-auto mt-8 grid aspect-square w-full max-w-[400px] place-items-center lg:mt-0" aria-label="আপনার এলাকার হাট, কেনা-বেচা সহজ, সারা বাংলাদেশ">
-            <div className="absolute inset-[4%] rounded-full border border-amber-300/30" />
-            <div className="absolute inset-[11%] rounded-full border border-amber-300/20" />
-            <div className="absolute inset-[18%] rounded-full border border-amber-300/20" />
-            <div className="absolute inset-[24%] rounded-full bg-emerald-700/50" />
-            <div className="relative grid h-[48%] w-[48%] place-items-center rounded-full bg-amber-400/90 text-emerald-950 shadow-[0_0_0_12px_rgba(234,179,8,0.08)]">
-              <Store size={66} strokeWidth={1.5} />
-            </div>
-            <span className="absolute left-1/2 top-[5%] -translate-x-1/2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-emerald-950 shadow-md">আপনার এলাকার হাট</span>
-            <span className="absolute bottom-[12%] right-0 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-emerald-950 shadow-md">কেনা-বেচা সহজ</span>
-            <span className="absolute bottom-[12%] left-0 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-emerald-950 shadow-md">সারা বাংলাদেশ</span>
+          <div className="relative min-h-[220px] overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-900 via-emerald-800 to-green-700 p-5 text-white shadow-xl sm:min-h-[270px] sm:p-7">
+            <div className="absolute -right-8 -top-10 h-48 w-48 rounded-full border border-white/15"></div><div className="absolute -right-2 top-0 h-36 w-36 rounded-full border border-white/15"></div><div className="absolute -bottom-16 left-1/4 h-44 w-44 rounded-full bg-emerald-400/10 blur-sm"></div>
+            <div className="relative flex h-full min-h-[190px] flex-col justify-between sm:min-h-[220px]"><div><span className="inline-flex rounded-full bg-amber-300 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-emerald-950">হাটবাজার অফার</span><h2 className="mt-4 max-w-sm text-3xl font-black leading-tight sm:text-4xl">আপনার পণ্যকে দিন <span className="text-amber-300">সবার সামনে</span></h2><p className="mt-2 max-w-sm text-sm leading-6 text-emerald-50">বিশেষ অফার, নতুন পণ্য বা ব্যবসার বিজ্ঞাপন প্রকাশ করুন।</p></div><div className="mt-5 flex items-end justify-between gap-3"><button type="button" onClick={() => setPosting(true)} className="rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-extrabold text-emerald-950 shadow transition hover:bg-amber-200">এখনই বিজ্ঞাপন দিন ↗</button><div className="grid h-16 w-16 shrink-0 rotate-6 place-items-center rounded-2xl border border-white/20 bg-white/10 text-center shadow-lg"><span className="text-2xl">🎁</span><span className="text-[9px] font-bold">OFFER</span></div></div></div>
           </div>
         </div>
       </section>
-
       <main className="mx-auto max-w-6xl px-4 py-5">
         <div className="flex gap-2 overflow-x-auto border-b pb-3">
           {[{ key: "", label: "সব", emoji: "🧺", slug: "" }, ...displayCategories].map((c) => (
