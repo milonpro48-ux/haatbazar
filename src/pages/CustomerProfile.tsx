@@ -1,6 +1,6 @@
-import { LayoutDashboard, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, UserRound, Package, Heart, Store, Wallet, MapPin, MessageCircle, ShieldCheck, CircleHelp, Camera, CheckCircle2, Bell, Trash2, Plus, Save, LogOut } from "lucide-react";
+import { LayoutDashboard, ArrowLeft, UserRound, Package, Heart, Store, Wallet, MapPin, MessageCircle, ShieldCheck, CircleHelp, Camera, CheckCircle2, Bell, Trash2, Plus, Save, LogOut } from "lucide-react";
 import { readDemoSession } from "@/components/AuthDialog";
 
 const KEY = "haatbazar_customer_profile_v1";
