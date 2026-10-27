@@ -1,4 +1,5 @@
-import { LayoutDashboard, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { LayoutDashboard } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { ArrowLeft, UserRound, Package, Heart, Store, Wallet, MapPin, MessageCircle, ShieldCheck, CircleHelp, Camera, CheckCircle2, Bell, Trash2, Plus, Save, LogOut } from "lucide-react";
 import { readDemoSession } from "@/components/AuthDialog";
