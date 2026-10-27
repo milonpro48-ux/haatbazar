@@ -8,6 +8,7 @@ import { ListingCard } from "@/components/ListingCard";
 import { AdminAnalytics } from "@/pages/AdminAnalytics";
 import AdminPanel from "@/pages/AdminPanel";
 import SuperAdminDashboard from "@/pages/SuperAdminDashboard";
+import SuperAdminProfile from "@/pages/SuperAdminProfile";
 import SuperAdminLogin from "@/pages/SuperAdminLogin";
 import MyOrders from "@/pages/MyOrders";
 import CustomerProfile from "@/pages/CustomerProfile";
@@ -241,11 +242,12 @@ export default function Home() {
 
   if (path === "/profile") { const adminSession = (() => { try { const v = JSON.parse(localStorage.getItem("haatbazar_super_admin_demo_session_v1") || "null"); return v?.demoOnly === true && typeof v?.email === "string"; } catch { return false; } })(); return (demoUser || adminSession) ? <CustomerProfile /> : <div className="mx-auto max-w-xl p-8 text-center"><h1 className="text-xl font-bold">প্রোফাইল দেখতে লগইন করুন</h1><p className="my-3 text-sm text-muted-foreground">আপনার অ্যাকাউন্টে প্রবেশ করে প্রোফাইল খুলুন।</p><button onClick={() => { setAuthMode("login"); setLocation("/"); }} className="rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white">লগইন</button></div>; }
   if (path === "/my-orders") return <MyOrders onBack={() => setLocation("/")} />;
+  if (path === "/admin/profile" && import.meta.env.VITE_DEMO_MODE === "true") { const adminSession = (() => { try { const v = JSON.parse(localStorage.getItem("haatbazar_super_admin_demo_session_v1") || "null"); return v?.demoOnly === true && typeof v?.email === "string"; } catch { return false; } })(); if (!adminSession) { setLocation("/admin/login"); return null; } return <SuperAdminProfile />; }
   if (path === "/admin/login" && import.meta.env.VITE_DEMO_MODE === "true") return <SuperAdminLogin />;
   if (path === "/admin" && import.meta.env.VITE_DEMO_MODE === "true") {
     const adminSession = (() => { try { const v = JSON.parse(localStorage.getItem("haatbazar_super_admin_demo_session_v1") || "null"); return v?.demoOnly === true && typeof v?.email === "string"; } catch { return false; } })();
     if (!adminSession) { setLocation("/admin/login"); return null; }
-    return <SuperAdminDashboard onBack={() => { localStorage.removeItem("haatbazar_super_admin_demo_session_v1"); setLocation("/"); }} onProfile={() => setLocation("/profile")} />;
+    return <SuperAdminDashboard onBack={() => { localStorage.removeItem("haatbazar_super_admin_demo_session_v1"); setLocation("/"); }} onProfile={() => setLocation("/admin/profile")} />;
   }
   if (path === "/admin") return <AdminPanel onBack={() => setLocation("/")} />;
   if (path === "/admin/analytics") return <AdminAnalytics onBack={() => setLocation("/admin")} />;
