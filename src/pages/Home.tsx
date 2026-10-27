@@ -12,6 +12,9 @@ import SuperAdminProfile from "@/pages/SuperAdminProfile";
 import SuperAdminLogin from "@/pages/SuperAdminLogin";
 import MyOrders from "@/pages/MyOrders";
 import CustomerProfile from "@/pages/CustomerProfile";
+import SellerProfile from "@/pages/SellerProfile";
+import WholesalerProfile from "@/pages/WholesalerProfile";
+import BusinessBuyerProfile from "@/pages/BusinessBuyerProfile";
 import { initializeAnalytics, trackEvent } from "@/lib/analytics";
 import { PostAdDialog } from "@/components/PostAdDialog";
 import { OrderDialog } from "@/components/OrderDialog";
@@ -190,6 +193,7 @@ export default function Home() {
   const customerProfileSummary = (() => { try { return JSON.parse(localStorage.getItem("haatbazar_customer_profile_v1") || "{}") as {name?: string; photo?: string}; } catch { return {}; } })();
   const dashboardDisplayName = customerProfileSummary.name?.trim() || demoUser?.name || "ব্যবহারকারী";
   const dashboardRole = demoUser?.role || "buyer";
+  const profilePath = dashboardRole === "seller" ? "/seller/profile" : dashboardRole === "wholesaler" ? "/wholesaler/profile" : dashboardRole === "business" ? "/business/profile" : "/profile";
   const dashboardDetails = {
     buyer: { title: "Customer Dashboard — গ্রাহক / ক্রেতা", subtitle: "নিজের কেনাকাটা, অর্ডার, পছন্দের পণ্য ও প্রোফাইল পরিচালনা করুন।", icon: "🛍️", actions: [{ href: "/my-orders", icon: "📦", title: "আমার অর্ডার", body: "অর্ডার পেজ খুলুন; বাস্তব ট্র্যাকিং ডেটাবেস সংযোগের পরে চালু হবে।", cta: "অর্ডার দেখুন" }, { href: "/", icon: "🔎", title: "পণ্য খুঁজুন", body: "খুচরা ও পাইকারি পণ্য ব্রাউজ করুন।", cta: "কেনাকাটা করুন" }], modules: [{icon:"🚚",title:"অর্ডার ট্র্যাকিং",detail:"অর্ডারের বর্তমান অবস্থা",status:"ডেটাবেস সংযোগ প্রয়োজন"},{icon:"♡",title:"উইশলিস্ট",detail:"পছন্দের পণ্য সংরক্ষণ",status:"পরবর্তী ধাপ"},{icon:"🧾",title:"পেমেন্ট হিস্ট্রি",detail:"অর্ডারভিত্তিক পেমেন্ট রেকর্ড",status:"পেমেন্ট বন্ধ"},{icon:"👤",title:"প্রোফাইল",detail:"নাম, যোগাযোগ ও ঠিকানা",status:"পরবর্তী ধাপ"}] },
     seller: { title: "Seller Dashboard — খুচরা বিক্রেতা", subtitle: "নিজের পণ্য, বিজ্ঞাপন, স্টক ও বিক্রির কাজ পরিচালনা করুন।", icon: "🏪", actions: [{ href: "/", icon: "➕", title: "পণ্য / বিজ্ঞাপন দিন", body: "হোমপেজ থেকে পণ্য যোগ করার ফর্ম খুলুন।", cta: "পণ্য যোগ করতে যান" }, { href: "/my-orders", icon: "📦", title: "অর্ডার পেজ", body: "ডেমো অর্ডার পেজ খুলুন; বিক্রেতাভিত্তিক অর্ডার ফিল্টার এখনও সংযুক্ত নয়।", cta: "অর্ডার পেজ" }], modules: [{icon:"🛍️",title:"পণ্য ম্যানেজমেন্ট",detail:"পণ্য যোগ, সম্পাদনা ও ছবি",status:"পণ্য ফর্ম উপলভ্য"},{icon:"📊",title:"সেলস রিপোর্ট",detail:"বিক্রি ও অর্ডারের সারাংশ",status:"লাইভ ডেটা প্রয়োজন"},{icon:"📦",title:"স্টক আপডেট",detail:"মজুদ ও পরিমাণ নিয়ন্ত্রণ",status:"পরবর্তী ধাপ"},{icon:"🧮",title:"ইনভেন্টরি",detail:"স্টক ও পণ্যের তালিকা",status:"পরবর্তী ধাপ"}] },
@@ -205,7 +209,7 @@ export default function Home() {
             <Link href="/" aria-label="মার্কেটপ্লেসে ফিরে যান" title="মার্কেটপ্লেসে ফিরে যান" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400">←</Link>
             <Link href="/" className="text-xl font-extrabold tracking-tight text-white">{brandSettings.siteName}<span className="ml-2 text-xs font-medium text-emerald-300">হাটবাজার</span></Link>
           </div>
-          <Link href="/profile" aria-label="আমার প্রোফাইল" className="group flex min-w-0 items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/80 px-3 py-2 shadow-lg shadow-black/10 transition hover:border-emerald-400/30 hover:bg-slate-900 sm:gap-3">{customerProfileSummary.photo ? <img src={customerProfileSummary.photo} alt="প্রোফাইল ছবি" className="h-10 w-10 shrink-0 rounded-full border-2 border-emerald-400/70 object-cover shadow-sm" /> : <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-emerald-400/50 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-sm font-bold text-emerald-200">{dashboardDisplayName.trim().slice(0,2)}</span>}<span className="min-w-0 text-left"><span className="block max-w-[145px] truncate text-sm font-bold leading-5 text-white">{dashboardDisplayName}</span><span className="block text-[11px] leading-4 text-slate-400">আমার প্রোফাইল</span></span></Link>
+          <Link href={profilePath} aria-label="আমার প্রোফাইল" className="group flex min-w-0 items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/80 px-3 py-2 shadow-lg shadow-black/10 transition hover:border-emerald-400/30 hover:bg-slate-900 sm:gap-3">{customerProfileSummary.photo ? <img src={customerProfileSummary.photo} alt="প্রোফাইল ছবি" className="h-10 w-10 shrink-0 rounded-full border-2 border-emerald-400/70 object-cover shadow-sm" /> : <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-emerald-400/50 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-sm font-bold text-emerald-200">{dashboardDisplayName.trim().slice(0,2)}</span>}<span className="min-w-0 text-left"><span className="block max-w-[145px] truncate text-sm font-bold leading-5 text-white">{dashboardDisplayName}</span><span className="block text-[11px] leading-4 text-slate-400">আমার প্রোফাইল</span></span></Link>
         </div>
       </header>
       <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 lg:grid-cols-[230px_minmax(0,1fr)]">
@@ -215,7 +219,7 @@ export default function Home() {
           <nav className="mt-4 grid gap-1 text-sm">
             <Link href="/dashboard" className="rounded-lg bg-emerald-500/15 px-3 py-3 font-semibold text-emerald-200">◈ ওভারভিউ</Link>
             <Link href="/my-orders" className="rounded-lg px-3 py-3 text-slate-300 hover:bg-white/5">▤ আমার অর্ডার</Link>
-            <Link href="/profile" className="rounded-lg px-3 py-3 text-slate-300 hover:bg-white/5">👤 আমার প্রোফাইল</Link>
+            <Link href={profilePath} className="rounded-lg px-3 py-3 text-slate-300 hover:bg-white/5">👤 আমার প্রোফাইল</Link>
             <Link href="/" className="rounded-lg px-3 py-3 text-slate-300 hover:bg-white/5">⌕ মার্কেটপ্লেস</Link>
           </nav>
           <p className="mt-5 rounded-xl border border-amber-300/20 bg-amber-300/5 p-3 text-xs leading-5 text-amber-100">ডেমো মোড: তথ্য এই ব্রাউজারে সংরক্ষিত। বাস্তব সার্ভার ডেটার সঙ্গে যুক্ত নয়।</p><button type="button" onClick={() => { localStorage.removeItem("haatbazar_demo_session_v1"); setDemoUser(null); setLocation("/"); }} className="mt-auto flex w-full items-center justify-center gap-2 rounded-xl border border-rose-400/25 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-200 transition hover:border-rose-400/50 hover:bg-rose-500/20 lg:mt-6"><span aria-hidden="true">↪</span> লগআউট</button>
@@ -242,7 +246,11 @@ export default function Home() {
     </div>
   );
 
-  if (path === "/profile") { const adminSession = (() => { try { const v = JSON.parse(localStorage.getItem("haatbazar_super_admin_demo_session_v1") || "null"); return v?.demoOnly === true && typeof v?.email === "string"; } catch { return false; } })(); return (demoUser || adminSession) ? <CustomerProfile /> : <div className="mx-auto max-w-xl p-8 text-center"><h1 className="text-xl font-bold">প্রোফাইল দেখতে লগইন করুন</h1><p className="my-3 text-sm text-muted-foreground">আপনার অ্যাকাউন্টে প্রবেশ করে প্রোফাইল খুলুন।</p><button onClick={() => { setAuthMode("login"); setLocation("/"); }} className="rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white">লগইন</button></div>; }
+  const profileLoginPrompt = <div className="mx-auto max-w-xl p-8 text-center"><h1 className="text-xl font-bold">প্রোফাইল দেখতে লগইন করুন</h1><p className="my-3 text-sm text-muted-foreground">আপনার অ্যাকাউন্টে প্রবেশ করে প্রোফাইল খুলুন।</p><button onClick={() => { setAuthMode("login"); setLocation("/"); }} className="rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white">লগইন</button></div>;
+  if (path === "/seller/profile") return demoUser?.role === "seller" ? <SellerProfile /> : profileLoginPrompt;
+  if (path === "/wholesaler/profile") return demoUser?.role === "wholesaler" ? <WholesalerProfile /> : profileLoginPrompt;
+  if (path === "/business/profile") return demoUser?.role === "business" ? <BusinessBuyerProfile /> : profileLoginPrompt;
+  if (path === "/profile") { const adminSession = (() => { try { const v = JSON.parse(localStorage.getItem("haatbazar_super_admin_demo_session_v1") || "null"); return v?.demoOnly === true && typeof v?.email === "string"; } catch { return false; } })(); if (adminSession) return <CustomerProfile />; if (!demoUser) return profileLoginPrompt; return demoUser.role === "seller" ? <SellerProfile /> : demoUser.role === "wholesaler" ? <WholesalerProfile /> : demoUser.role === "business" ? <BusinessBuyerProfile /> : <CustomerProfile />; }
   if (path === "/my-orders") return <MyOrders onBack={() => setLocation("/")} />;
   if (path === "/admin/profile" && import.meta.env.VITE_DEMO_MODE === "true") { const adminSession = (() => { try { const v = JSON.parse(localStorage.getItem("haatbazar_super_admin_demo_session_v1") || "null"); return v?.demoOnly === true && typeof v?.email === "string"; } catch { return false; } })(); if (!adminSession) { setLocation("/admin/login"); return null; } return <SuperAdminProfile />; }
   if (path === "/admin/login" && import.meta.env.VITE_DEMO_MODE === "true") return <SuperAdminLogin />;
