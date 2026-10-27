@@ -114,7 +114,7 @@ try {
         if (!isset($_FILES['image']) || !is_array($_FILES['image'])) out(['error'=>'Image file is required'], 422);
         $file = $_FILES['image'];
         if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) out(['error'=>'Image upload failed'], 422);
-        if ((int)($file['size'] ?? 0) < 1 || (int)$file['size'] > 2 * 1024 * 1024 || !is_uploaded_file($file['tmp_name'])) out(['error'=>'Image must be smaller than 2 MB'], 422);
+        if ((int)($file['size'] ?? 0) < 1 || (int)$file['size'] > 4 * 1024 * 1024 || !is_uploaded_file($file['tmp_name'])) out(['error'=>'Image must be smaller than 4 MB'], 422);
         $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
         $extensions = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'];
         if (!isset($extensions[$mime]) || @getimagesize($file['tmp_name']) === false) out(['error'=>'Only valid JPG, PNG or WebP images are accepted'], 422);
