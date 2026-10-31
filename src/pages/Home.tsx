@@ -11,6 +11,7 @@ import SuperAdminDashboard from "@/pages/SuperAdminDashboard";
 import SuperAdminProfile from "@/pages/SuperAdminProfile";
 import SuperAdminLogin from "@/pages/SuperAdminLogin";
 import MyOrders from "@/pages/MyOrders";
+import SellerOrders from "@/pages/SellerOrders";
 import CustomerProfile from "@/pages/CustomerProfile";
 import SellerProfile from "@/pages/SellerProfile";
 import WholesalerProfile from "@/pages/WholesalerProfile";
@@ -252,6 +253,7 @@ export default function Home() {
   if (path === "/business/profile") return demoUser?.role === "business" ? <BusinessBuyerProfile /> : profileLoginPrompt;
   if (path === "/profile") { const adminSession = (() => { try { const v = JSON.parse(localStorage.getItem("haatbazar_super_admin_demo_session_v1") || "null"); return v?.demoOnly === true && typeof v?.email === "string"; } catch { return false; } })(); if (adminSession) return <CustomerProfile />; if (!demoUser) return profileLoginPrompt; return demoUser.role === "seller" ? <SellerProfile /> : demoUser.role === "wholesaler" ? <WholesalerProfile /> : demoUser.role === "business" ? <BusinessBuyerProfile /> : <CustomerProfile />; }
   if (path === "/my-orders") return <MyOrders onBack={() => setLocation("/")} />;
+  if (path === "/seller/orders" || path === "/wholesaler/orders") return <SellerOrders />;
   if (path === "/admin/profile" && import.meta.env.VITE_DEMO_MODE === "true") { const adminSession = (() => { try { const v = JSON.parse(localStorage.getItem("haatbazar_super_admin_demo_session_v1") || "null"); return v?.demoOnly === true && typeof v?.email === "string"; } catch { return false; } })(); if (!adminSession) { setLocation("/admin/login"); return null; } return <SuperAdminProfile />; }
   if (path === "/admin/login" && import.meta.env.VITE_DEMO_MODE === "true") return <SuperAdminLogin />;
   if (path === "/admin" && import.meta.env.VITE_DEMO_MODE === "true") {
