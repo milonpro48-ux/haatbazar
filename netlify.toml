@@ -1,0 +1,14 @@
+# Netlify configuration for the isolated HaatBazar demo branch.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA fallback: let the client-side router handle /admin and other app routes.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Enable the demo-only Super Admin login on branch deploy previews.
+[context.branch-deploy.environment]
+  VITE_DEMO_MODE = "true"
