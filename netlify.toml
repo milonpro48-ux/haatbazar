@@ -12,3 +12,4 @@
 # Enable the demo-only Super Admin login on branch deploy previews.
 [context.branch-deploy.environment]
   VITE_DEMO_MODE = "true"
+  GITHUB_PAGES = "false"
