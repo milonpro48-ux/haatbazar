@@ -1,0 +1,90 @@
+name: PHP migration checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'php-api/**'
+      - 'docs/infinityfree-php-mysql-migration.md'
+      - '.github/workflows/php-migration.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'php-api/**'
+      - 'docs/infinityfree-php-mysql-migration.md'
+
+jobs:
+  php-lint-and-schema:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test-root-password
+          MYSQL_DATABASE: haatbazar_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptest-root-password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PHP with PDO MySQL
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql
+      - name: PHP syntax checks
+        run: find php-api -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Import schema into clean MySQL database
+        env:
+          MYSQL_PWD: test-root-password
+        run: mysql --host=127.0.0.1 --user=root haatbazar_test < php-api/schema.sql
+      - name: Verify expected tables exist
+        env:
+          MYSQL_PWD: test-root-password
+        run: |
+          actual="$(mysql --batch --skip-column-names --host=127.0.0.1 --user=root haatbazar_test -e "SHOW TABLES" | sort | tr '\n' ' ')"
+          for table in users listings orders analytics_events uploaded_images marketing_settings otp_challenges seller_verifications payment_transactions courier_shipments order_status_history; do
+            case " $actual " in *" $table "*) ;; *) echo "Missing table: $table"; exit 1 ;; esac
+          done
+      - name: Prepare isolated smoke-test config
+        run: |
+          cp php-api/config.example.php php-api/config.local.php
+          cat > php-api/config.local.php <<'PHP'
+          <?php
+          declare(strict_types=1);
+          return [
+            'db' => [
+              'host' => '127.0.0.1',
+              'name' => 'haatbazar_test',
+              'user' => 'root',
+              'password' => 'test-root-password',
+              'charset' => 'utf8mb4',
+            ],
+            'session_name' => 'hb_test',
+            'session_secure' => false,
+          ];
+          PHP
+      - name: Smoke test API routes and fail-closed behavior
+        run: |
+          php -S 127.0.0.1:8080 php-api/index.php > /tmp/haatbazar-php-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true; rm -f php-api/config.local.php' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:8080/api/healthz >/dev/null; then break; fi
+            sleep 1
+          done
+          bash php-api/tests/smoke.sh
+      - name: Set up Node.js for API integration tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test PHP/MySQL registration, wholesale, orders, admin permissions and audit
+        env:
+          HAATBAZAR_TEST_DB_DSN: mysql:host=127.0.0.1;dbname=haatbazar_test;charset=utf8mb4
+          HAATBAZAR_TEST_DB_USER: root
+          HAATBAZAR_TEST_DB_PASSWORD: test-root-password
+        run: node php-api/tests/marketplace.mjs
